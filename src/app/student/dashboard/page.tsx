@@ -35,7 +35,17 @@ export default function StudentDashboard() {
         setStudentInfo(studentData);
         const { data: assignmentData, error: assignmentError } = await supabase
           .from('interview_assignments')
-          .select('*, interviews(*)')
+          .select(`
+            *,
+            interviews(*),
+            responses (
+              id,
+              answer_text,
+              questions (
+                expected_answer
+              )
+            )
+          `)
           .eq('student_id', studentData.id);
 
         if (assignmentError) throw assignmentError;
@@ -140,7 +150,6 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <h3 style={{ marginBottom: '1.5rem' }}>Your Interviews</h3>
       {loading ? (
         <p>Loading your assignments...</p>
       ) : assignments.length === 0 ? (
@@ -148,43 +157,91 @@ export default function StudentDashboard() {
           <p style={{ color: 'var(--text-secondary)' }}>You don't have any interviews assigned yet.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', marginTop: '1rem' }}>
-          {assignments.map((assignment) => (
-            <div key={assignment.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
-              <div>
-                <h4 style={{ marginBottom: '0.5rem' }}>{assignment.interviews?.title}</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>💻 {assignment.interviews?.technology}</span>
-                  <span>•</span>
-                  <span>⏱️ {assignment.duration} mins</span>
-                </p>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-color)' }}>
-                    📅 {assignment.scheduled_date} at {assignment.start_time}
-                  </span>
-                  <span style={{ 
-                    background: assignment.status === 'completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)', 
-                    color: assignment.status === 'completed' ? 'var(--success)' : 'var(--accent-color)',
-                    padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'
-                  }}>
-                    {assignment.status}
-                  </span>
-                </div>
-              </div>
-              
-              {assignment.status === 'pending' && (
-                <Link href={`/interview/${assignment.id}`} style={{ marginTop: 'auto' }}>
-                  <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>Start Interview</button>
-                </Link>
-              )}
+        <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)', marginTop: '1rem' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+            <h3 style={{ margin: 0 }}>Interview Performance Record</h3>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)' }}>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Interview</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Date</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Score</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Result</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assignment) => {
+                  const isCompleted = assignment.status === 'completed';
+                  
+                  // Score calculation
+                  const correctCount = assignment.responses?.reduce((acc: number, res: any) => {
+                    if (!res.questions?.expected_answer) return acc;
+                    const studentAns = (res.answer_text || '').trim().toLowerCase();
+                    const expectedAns = (res.questions.expected_answer || '').trim().toLowerCase();
+                    return studentAns === expectedAns ? acc + 1 : acc;
+                  }, 0) || 0;
+                  const totalQuestions = assignment.responses?.length || 0;
+                  const isPass = isCompleted && totalQuestions > 0 && (correctCount / totalQuestions) >= 0.5;
 
-              {assignment.status === 'completed' && (
-                <Link href={`/student/results/${assignment.id}`} style={{ marginTop: 'auto' }}>
-                  <button style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>View Results</button>
-                </Link>
-              )}
-            </div>
-          ))}
+                  return (
+                    <tr key={assignment.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '1.25rem 1.5rem' }}>
+                        <div style={{ fontWeight: 700 }}>{assignment.interviews?.title}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{assignment.interviews?.technology} • {assignment.duration} mins</div>
+                      </td>
+                      <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        {assignment.scheduled_date}
+                      </td>
+                      <td style={{ padding: '1.25rem 1.5rem' }}>
+                        <span style={{ 
+                          background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                          color: isCompleted ? 'var(--success)' : 'var(--accent-color)',
+                          padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
+                          border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                        }}>
+                          {assignment.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '1.25rem 1.5rem' }}>
+                        {isCompleted ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <strong style={{ fontSize: '1rem' }}>{correctCount}</strong>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ {totalQuestions}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)' }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '1.25rem 1.5rem' }}>
+                        {isCompleted ? (
+                          <span style={{ color: isPass ? 'var(--success)' : 'var(--danger)', fontWeight: 800, fontSize: '0.8rem' }}>
+                            {isPass ? '● PASS' : '● FAIL'}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)' }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                        {assignment.status === 'pending' ? (
+                          <Link href={`/interview/${assignment.id}`}>
+                            <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
+                          </Link>
+                        ) : (
+                          <Link href={`/student/results/${assignment.id}`}>
+                            <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>View Results</button>
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

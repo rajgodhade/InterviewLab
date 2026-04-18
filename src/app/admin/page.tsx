@@ -15,6 +15,8 @@ export default function AdminDashboard() {
     totalCompleted: 0,
     totalPending: 0
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDifficulty, setFilterDifficulty] = useState('All');
 
   useEffect(() => {
     fetchData();
@@ -82,6 +84,13 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredInterviews = interviews.filter(i => {
+    const matchesSearch = i.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          i.technology.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDifficulty = filterDifficulty === 'All' || i.difficulty === filterDifficulty;
+    return matchesSearch && matchesDifficulty;
+  });
+
   if (loading) return <div className="container"><p>Loading interviews...</p></div>;
 
   return (
@@ -130,21 +139,46 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex-responsive" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ margin: 0 }}>All Interviews</h3>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {interviews.length} sessions</div>
+      <div className="flex-responsive" style={{ marginBottom: '1.5rem', alignItems: 'flex-end' }}>
+        <div>
+          <h3 style={{ margin: 0 }}>All Interviews</h3>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {filteredInterviews.length} sessions</div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem', flex: 1, maxWidth: '600px', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search by title or tech..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '2.75rem', fontSize: '0.9rem' }}
+            />
+          </div>
+          <select 
+            value={filterDifficulty}
+            onChange={(e) => setFilterDifficulty(e.target.value)}
+            style={{ width: 'auto', minWidth: '150px', fontSize: '0.9rem' }}
+          >
+            <option value="All">All Difficulty</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))' }}>
-        {interviews.length === 0 ? (
+      <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+        {filteredInterviews.length === 0 ? (
           <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: 'var(--glass-bg)' }}>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>No interviews created yet.</p>
-            <Link href="/admin/create">
-              <button style={{ background: 'var(--accent-gradient)' }}>Create your first interview</button>
-            </Link>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>No interviews found matching your criteria.</p>
+            {(searchQuery || filterDifficulty !== 'All') && (
+              <button onClick={() => { setSearchQuery(''); setFilterDifficulty('All'); }} style={{ background: 'var(--bg-accent)' }}>Clear Filters</button>
+            )}
           </div>
         ) : (
-          interviews.map((interview) => (
+          filteredInterviews.map((interview) => (
             <div 
               key={interview.id} 
               className="card" 

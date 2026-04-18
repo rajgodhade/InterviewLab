@@ -9,6 +9,7 @@ export default function GroupsDashboard() {
   const { showToast, showConfirm } = useUI();
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     fetchGroups();
@@ -16,7 +17,6 @@ export default function GroupsDashboard() {
 
   const fetchGroups = async () => {
     try {
-      // Get groups and count members
       const { data, error } = await supabase
         .from('groups')
         .select(`
@@ -32,6 +32,24 @@ export default function GroupsDashboard() {
       showToast('Failed to load groups: ' + err.message, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArchive = async (groupId: string, isArchived: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('groups')
+        .update({ is_archived: !isArchived })
+        .eq('id', groupId);
+      
+      if (error) throw error;
+      
+      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, is_archived: !isArchived } : g));
+      showToast(isArchived ? 'Group unarchived' : 'Group archived', 'success');
+      fetchGroups(); // Refresh to update member counts and state properly
+    } catch (err: any) {
+      console.error(err);
+      showToast('Action failed. Ensure "is_archived" column exists in groups table.', 'error');
     }
   };
 
@@ -55,38 +73,65 @@ export default function GroupsDashboard() {
     }
   };
 
+  const filteredGroups = groups.filter(g => (g.is_archived || false) === showArchived);
+
   if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading groups...</div>;
 
   return (
     <div className="container">
       <div className="flex-responsive" style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0 }}>Student Groups</h2>
-        <Link href="/admin/groups/create">
-          <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>+ Create Group</button>
-        </Link>
+        <div>
+          <h2 style={{ margin: 0 }}>Student Groups</h2>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Manage your batches and student collections.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', width: '100%', maxWidth: '500px', justifyContent: 'flex-end' }}>
+          <button 
+            onClick={() => setShowArchived(!showArchived)}
+            style={{ 
+              background: showArchived ? 'var(--accent-gradient)' : 'var(--bg-accent)', 
+              color: 'var(--text-primary)', border: '1px solid var(--border-color)',
+              fontSize: '0.85rem', padding: '0.75rem 1rem'
+            }}
+          >
+            {showArchived ? '📦 Showing Archived' : '📁 Show Archived'}
+          </button>
+          <Link href="/admin/groups/create">
+            <button style={{ background: 'var(--accent-gradient)' }}>+ Create Group</button>
+          </Link>
+        </div>
       </div>
 
-      {groups.length === 0 ? (
+      {filteredGroups.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
-          <h3 style={{ marginBottom: '1rem' }}>No groups found</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Create your first student group to manage batches easily.</p>
-          <Link href="/admin/groups/create">
-            <button style={{ background: 'var(--accent-gradient)' }}>Create Group</button>
-          </Link>
+          <h3 style={{ marginBottom: '1rem' }}>No {showArchived ? 'archived' : 'active'} groups found</h3>
+          {!showArchived && (
+            <Link href="/admin/groups/create">
+              <button style={{ background: 'var(--accent-gradient)' }}>Create your first group</button>
+            </Link>
+          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
-          {groups.map((g) => (
-            <div key={g.id} className="card" style={{ display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
+          {filteredGroups.map((g) => (
+            <div key={g.id} className="card" style={{ display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)', opacity: g.is_archived ? 0.8 : 1 }}>
               <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'flex-start' }}>
                 <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{g.name}</h3>
-                <button 
-                  onClick={() => handleDelete(g.id, g.name)}
-                  style={{ background: 'transparent', color: 'var(--text-secondary)', padding: '0.25rem', fontSize: '1.25rem', lineHeight: 1 }}
-                  title="Delete Group"
-                >
-                  ✕
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    onClick={() => handleArchive(g.id, g.is_archived)}
+                    style={{ background: 'transparent', color: 'var(--text-secondary)', padding: '0.25rem', fontSize: '1.1rem', lineHeight: 1 }}
+                    title={g.is_archived ? 'Unarchive' : 'Archive'}
+                  >
+                    {g.is_archived ? '📤' : '📥'}
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(g.id, g.name)}
+                    style={{ background: 'transparent', color: 'var(--text-secondary)', padding: '0.25rem', fontSize: '1.1rem', lineHeight: 1 }}
+                    title="Delete Group"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               
               {g.description && (

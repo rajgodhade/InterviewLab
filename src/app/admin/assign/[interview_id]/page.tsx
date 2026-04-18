@@ -36,8 +36,12 @@ export default function AssignInterview() {
       const { data: intData } = await supabase.from('interviews').select('*').eq('id', interviewId).single();
       if (intData) setInterview(intData);
 
-      // Fetch groups
-      const { data: groupData } = await supabase.from('groups').select('*').order('name');
+      // Fetch groups (filter out archived)
+      const { data: groupData } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('is_archived', false)
+        .order('name');
       if (groupData) setGroups(groupData);
     };
     fetchData();
@@ -48,11 +52,20 @@ export default function AssignInterview() {
     setLoading(true);
 
     try {
-      // 1. Check if student exists or create new
-      let studentId;
+      // 1. Check if student exists
       const { data: existingStudent } = await supabase
-        .from('students').select('id').eq('email', formData.studentEmail).single();
+        .from('students')
+        .select('id, is_archived')
+        .eq('email', formData.studentEmail)
+        .single();
 
+      if (existingStudent?.is_archived) {
+        showToast('This student is archived and cannot be assigned new interviews.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      let studentId;
       if (existingStudent) {
         studentId = existingStudent.id;
       } else {
@@ -88,10 +101,6 @@ export default function AssignInterview() {
       router.push(`/admin/view/${interviewId}`);
     } catch (error: any) {
       console.error('Individual Assignment Error:', error);
-      if (error.message) console.error('Error Message:', error.message);
-      if (error.details) console.error('Error Details:', error.details);
-      if (error.hint) console.error('Error Hint:', error.hint);
-      
       showToast('Error assigning interview: ' + (error.message || 'Unknown error'), 'error');
     } finally {
       setLoading(false);
@@ -108,13 +117,19 @@ export default function AssignInterview() {
     setLoading(true);
 
     try {
-      // 1. Get all students in the group
+      // 1. Get all students in the group who are NOT archived
       const { data: members, error: membersError } = await supabase
-        .from('group_members').select('student_id').eq('group_id', selectedGroupId);
+        .from('group_members')
+        .select(`
+          student_id,
+          students!inner(is_archived)
+        `)
+        .eq('group_id', selectedGroupId)
+        .eq('students.is_archived', false);
       
       if (membersError) throw membersError;
       if (!members || members.length === 0) {
-        showToast('Selected group has no students.', 'warning');
+        showToast('Selected group has no active (non-archived) students.', 'warning');
         setLoading(false);
         return;
       }
@@ -143,7 +158,7 @@ export default function AssignInterview() {
         }));
 
       if (newAssignments.length === 0) {
-        showToast('All students in this group already have this interview assigned.', 'warning');
+        showToast('All active students in this group already have this interview assigned.', 'warning');
         setLoading(false);
         return;
       }
@@ -160,10 +175,6 @@ export default function AssignInterview() {
       router.push(`/admin/view/${interviewId}`);
     } catch (error: any) {
       console.error('Group Assignment Error:', error);
-      if (error.message) console.error('Error Message:', error.message);
-      if (error.details) console.error('Error Details:', error.details);
-      if (error.hint) console.error('Error Hint:', error.hint);
-      
       showToast('Error assigning group: ' + (error.message || 'Unknown error'), 'error');
     } finally {
       setLoading(false);

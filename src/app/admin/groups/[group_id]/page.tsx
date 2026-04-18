@@ -53,11 +53,16 @@ export default function ManageGroup() {
       let studentId;
       const { data: existingStudent } = await supabase
         .from('students')
-        .select('id')
+        .select('id, is_archived')
         .eq('email', studentEmail)
         .single();
 
       if (existingStudent) {
+        if (existingStudent.is_archived) {
+          showToast('This student is archived and cannot be added to new groups.', 'error');
+          setAdding(false);
+          return;
+        }
         studentId = existingStudent.id;
       } else {
         const { data: newStudent, error: createStudentError } = await supabase

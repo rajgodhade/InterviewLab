@@ -220,6 +220,7 @@ h4 { font-size: clamp(1.1rem, 4vw, 1.5rem); }
 
 /* Utils */
 .mobile-only { display: none !important; }
+.mobile-flex { display: none !important; }
 .desktop-only { display: block !important; }
 .flex-desktop { display: flex !important; }
 
