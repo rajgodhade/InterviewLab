@@ -86,15 +86,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="container">
-      <div className="flex-between" style={{ marginBottom: '2rem' }}>
-        <h2>Admin Dashboard</h2>
+      <div className="flex-responsive" style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
         <Link href="/admin/create">
-          <button>+ Create Interview</button>
+          <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>+ Create Interview</button>
         </Link>
       </div>
 
       {/* Stats Overview Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+        gap: '1.25rem', 
+        marginBottom: '3.5rem' 
+      }}>
         <div className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-premium)' }}>
           <div style={{ background: 'rgba(59, 130, 246, 0.1)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>📄</div>
           <div>
@@ -125,12 +130,12 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+      <div className="flex-responsive" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ margin: 0 }}>All Interviews</h3>
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {interviews.length} sessions</div>
       </div>
 
-      <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+      <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))' }}>
         {interviews.length === 0 ? (
           <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: 'var(--glass-bg)' }}>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>No interviews created yet.</p>
@@ -156,8 +161,10 @@ export default function AdminDashboard() {
                 transition: 'transform 0.2s ease, border-color 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                if (window.innerWidth > 768) {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
@@ -173,8 +180,6 @@ export default function AdminDashboard() {
                   color: 'var(--danger)', padding: '0.4rem', fontSize: '0.9rem',
                   lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(244, 63, 94, 0.2)'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = '#fff'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'; e.currentTarget.style.color = 'var(--danger)'; }}
               >
                 ✕
               </button>
@@ -243,5 +248,6 @@ export default function AdminDashboard() {
         )}
       </div>
     </div>
+
   );
 }

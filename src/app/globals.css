@@ -16,6 +16,18 @@
   --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   --glass-bg: rgba(22, 30, 49, 0.7);
   --glass-border: rgba(255, 255, 255, 0.05);
+
+  /* Responsive Spacing */
+  --container-padding: 2rem;
+  --section-spacing: 4rem;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 1.25rem;
+    --section-spacing: 2.5rem;
+    --border-radius: 12px;
+  }
 }
 
 * {
@@ -52,12 +64,13 @@ button {
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 button:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-premium);
 }
 
 button:active {
@@ -86,7 +99,8 @@ input:focus, textarea:focus, select:focus {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--container-padding);
+  width: 100%;
 }
 
 .card {
@@ -94,7 +108,13 @@ input:focus, textarea:focus, select:focus {
   border-radius: var(--border-radius);
   padding: 2rem;
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-premium);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 1.5rem;
+  }
 }
 
 .flex-center {
@@ -109,6 +129,21 @@ input:focus, textarea:focus, select:focus {
   justify-content: space-between;
 }
 
+.flex-responsive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .flex-responsive {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
@@ -117,9 +152,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 1rem;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.5rem; }
+h1 { font-size: clamp(2rem, 8vw, 3rem); }
+h2 { font-size: clamp(1.5rem, 6vw, 2.25rem); }
+h3 { font-size: clamp(1.25rem, 5vw, 1.75rem); }
+h4 { font-size: clamp(1.1rem, 4vw, 1.5rem); }
 
 /* Modal Styles */
 .modal-overlay {
@@ -133,7 +169,7 @@ h3 { font-size: 1.5rem; }
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   padding: 1rem;
 }
 
@@ -181,3 +217,17 @@ h3 { font-size: 1.5rem; }
   50% { transform: scale(1.2); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* Utils */
+.mobile-only { display: none !important; }
+.desktop-only { display: block !important; }
+.flex-desktop { display: flex !important; }
+
+@media (max-width: 768px) {
+  .mobile-only { display: block !important; }
+  .mobile-flex { display: flex !important; }
+  .desktop-only { display: none !important; }
+  .flex-desktop { display: none !important; }
+}
+
+

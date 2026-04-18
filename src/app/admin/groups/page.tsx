@@ -59,25 +59,25 @@ export default function GroupsDashboard() {
 
   return (
     <div className="container">
-      <div className="flex-between" style={{ marginBottom: '2rem' }}>
-        <h2>Student Groups</h2>
+      <div className="flex-responsive" style={{ marginBottom: '2rem' }}>
+        <h2 style={{ margin: 0 }}>Student Groups</h2>
         <Link href="/admin/groups/create">
-          <button>+ Create Group</button>
+          <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>+ Create Group</button>
         </Link>
       </div>
 
       {groups.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+        <div className="card" style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
           <h3 style={{ marginBottom: '1rem' }}>No groups found</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Create your first student group to manage batches easily.</p>
           <Link href="/admin/groups/create">
-            <button>Create Group</button>
+            <button style={{ background: 'var(--accent-gradient)' }}>Create Group</button>
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
           {groups.map((g) => (
-            <div key={g.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div key={g.id} className="card" style={{ display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
               <div className="flex-between" style={{ marginBottom: '1rem', alignItems: 'flex-start' }}>
                 <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{g.name}</h3>
                 <button 
@@ -100,7 +100,7 @@ export default function GroupsDashboard() {
                   <strong>{g.group_members?.[0]?.count || 0}</strong> members
                 </span>
                 <Link href={`/admin/groups/${g.id}`}>
-                  <button style={{ background: 'var(--bg-accent)', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                  <button style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
                     Manage
                   </button>
                 </Link>
@@ -110,5 +110,6 @@ export default function GroupsDashboard() {
         </div>
       )}
     </div>
+
   );
 }

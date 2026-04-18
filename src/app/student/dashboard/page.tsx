@@ -94,9 +94,9 @@ export default function StudentDashboard() {
   return (
     <div className="container">
       <div className="card" style={{ marginBottom: '2rem', background: 'var(--bg-secondary)' }}>
-        <div className="flex-between">
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <div style={{ position: 'relative' }}>
+        <div className="flex-responsive">
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', textAlign: 'left' }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{ 
                 width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', 
                 background: 'var(--bg-primary)', border: '3px solid var(--accent-color)',
@@ -129,9 +129,9 @@ export default function StudentDashboard() {
                 </div>
               )}
             </div>
-            <div>
-              <h2 style={{ margin: 0 }}>Welcome, {studentInfo?.name}</h2>
-              <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>{studentInfo?.email}</p>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Welcome, {studentInfo?.name}</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{studentInfo?.email}</p>
             </div>
           </div>
           <button onClick={() => { localStorage.clear(); router.push('/student'); }} style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', border: '1px solid var(--danger)' }}>
@@ -140,7 +140,7 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <h3>Your Interviews</h3>
+      <h3 style={{ marginBottom: '1.5rem' }}>Your Interviews</h3>
       {loading ? (
         <p>Loading your assignments...</p>
       ) : assignments.length === 0 ? (
@@ -148,30 +148,39 @@ export default function StudentDashboard() {
           <p style={{ color: 'var(--text-secondary)' }}>You don't have any interviews assigned yet.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', marginTop: '1rem' }}>
+        <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', marginTop: '1rem' }}>
           {assignments.map((assignment) => (
-            <div key={assignment.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div key={assignment.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
               <div>
-                <h4 style={{ marginBottom: '0.25rem' }}>{assignment.interviews?.title}</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  {assignment.interviews?.technology} • {assignment.duration} mins
+                <h4 style={{ marginBottom: '0.5rem' }}>{assignment.interviews?.title}</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>💻 {assignment.interviews?.technology}</span>
+                  <span>•</span>
+                  <span>⏱️ {assignment.duration} mins</span>
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ background: 'var(--bg-accent)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
-                    Scheduled: {assignment.scheduled_date} at {assignment.start_time}
+                  <span style={{ background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-color)' }}>
+                    📅 {assignment.scheduled_date} at {assignment.start_time}
                   </span>
                   <span style={{ 
-                    background: assignment.status === 'completed' ? 'var(--success)' : 'var(--accent-color)', 
-                    padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', color: '#fff' 
+                    background: assignment.status === 'completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)', 
+                    color: assignment.status === 'completed' ? 'var(--success)' : 'var(--accent-color)',
+                    padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'
                   }}>
-                    {assignment.status.toUpperCase()}
+                    {assignment.status}
                   </span>
                 </div>
               </div>
               
               {assignment.status === 'pending' && (
                 <Link href={`/interview/${assignment.id}`} style={{ marginTop: 'auto' }}>
-                  <button style={{ width: '100%' }}>Start Interview</button>
+                  <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>Start Interview</button>
+                </Link>
+              )}
+
+              {assignment.status === 'completed' && (
+                <Link href={`/student/results/${assignment.id}`} style={{ marginTop: 'auto' }}>
+                  <button style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>View Results</button>
                 </Link>
               )}
             </div>
@@ -179,5 +188,6 @@ export default function StudentDashboard() {
         </div>
       )}
     </div>
+
   );
 }

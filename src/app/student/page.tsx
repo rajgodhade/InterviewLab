@@ -1,22 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useUI } from '@/components/UIProvider';
 
 export default function StudentLogin() {
   const router = useRouter();
+  const { showToast } = useUI();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If already logged in, redirect to dashboard
+    const savedEmail = localStorage.getItem('student_email');
+    if (savedEmail) {
+      router.push('/student/dashboard');
+    }
+  }, [router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !name) return;
-    
-    // In v1, we just store name/email in localStorage for simple identity
-    localStorage.setItem('student_email', email);
-    localStorage.setItem('student_name', name);
-    
-    router.push('/student/dashboard');
+
+    setLoading(true);
+    try {
+      // Check if student exists in the system (assigned by admin)
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        showToast('This email is not registered for any interviews. Please contact your admin.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Store in localStorage for session
+      localStorage.setItem('student_email', email.trim().toLowerCase());
+      localStorage.setItem('student_name', data.name || name); // Use database name if available
+      
+      showToast(`Welcome back, ${data.name || name}!`, 'success');
+      router.push('/student/dashboard');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Login failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,7 +79,9 @@ export default function StudentLogin() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <button type="submit" style={{ marginTop: '1rem' }}>Enter Portal</button>
+          <button type="submit" disabled={loading} style={{ marginTop: '1rem', background: loading ? 'var(--bg-accent)' : 'var(--accent-color)' }}>
+            {loading ? 'Verifying...' : 'Enter Portal'}
+          </button>
         </form>
       </div>
     </div>
