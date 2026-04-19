@@ -67,8 +67,14 @@ export default function StudentStudyMaterial() {
       if (assignError) throw assignError;
 
       // 3. Extract unique materials
-      const uniqueMaterials = Array.from(new Set(assignments.map(a => a.study_materials.id)))
-        .map(id => assignments.find(a => a.study_materials.id === id).study_materials);
+      const materials = assignments.flatMap(a => a.study_materials ?? []);
+
+      // Deduplicate by id using a Map (keeps the first occurrence)
+      const uniqueMaterials = Array.from(
+        new Map(
+          materials.map((m: { id: string } & Record<string, any>) => [m.id, m])
+        ).values()
+      );
 
       setMaterials(uniqueMaterials || []);
     } catch (err: any) {
