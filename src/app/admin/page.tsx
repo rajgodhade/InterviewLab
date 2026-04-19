@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStudents: 0,
-    totalGroups: 0,
+    totalBatches: 0,
     totalCompleted: 0,
     totalPending: 0
   });
@@ -74,8 +74,8 @@ export default function AdminDashboard() {
       // 2. Fetch Student Count
       const { count: studentCount } = await supabase.from('students').select('*', { count: 'exact', head: true });
       
-      // 3. Fetch Group Count
-      const { count: groupCount } = await supabase.from('groups').select('*', { count: 'exact', head: true });
+      // 3. Fetch Batch Count
+      const { count: batchCount } = await supabase.from('groups').select('*', { count: 'exact', head: true });
 
       // 4. Calculate status stats from interviews data
       let completed = 0;
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
 
       setStats({
         totalStudents: studentCount || 0,
-        totalGroups: groupCount || 0,
+        totalBatches: batchCount || 0,
         totalCompleted: completed,
         totalPending: pending
       });

@@ -107,3 +107,16 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;
 
+-- 11. Create Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;
+

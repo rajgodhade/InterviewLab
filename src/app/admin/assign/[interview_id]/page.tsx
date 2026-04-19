@@ -15,175 +15,200 @@ export default function AssignInterview() {
   const [loading, setLoading] = useState(false);
   
   // Assignment Type
-  const [assignType, setAssignType] = useState<'individual' | 'group'>('individual');
+  const [assignType, setAssignType] = useState<'individual' | 'batch'>('individual');
 
-  // Individual Form
-  const [formData, setFormData] = useState({
-    studentName: '',
-    studentEmail: '',
+  // Individual/Multiple Selection
+  const [registeredStudents, setRegisteredStudents] = useState<any[]>([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [showStudentList, setShowStudentList] = useState(false);
+  const [showNewStudentForm, setShowNewStudentForm] = useState(false);
+
+  // New Student Form
+  const [newStudentData, setNewStudentData] = useState({
+    name: '',
+    email: ''
+  });
+
+  // Shared Schedule Data
+  const [scheduleData, setScheduleData] = useState({
     scheduledDate: '',
     startTime: '',
     duration: 30,
   });
 
-  // Group Form
-  const [groups, setGroups] = useState<any[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState('');
+  // Batch Form
+  const [batches, setBatches] = useState<any[]>([]);
+  const [selectedBatchId, setSelectedBatchId] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch interview
-      const { data: intData } = await supabase.from('interviews').select('*').eq('id', interviewId).single();
-      if (intData) setInterview(intData);
-
-      // Fetch groups (filter out archived)
-      const { data: groupData } = await supabase
-        .from('groups')
-        .select('*')
-        .eq('is_archived', false)
-        .order('name');
-      if (groupData) setGroups(groupData);
-    };
     fetchData();
   }, [interviewId]);
 
+  const fetchData = async () => {
+    // 1. Fetch interview
+    const { data: intData } = await supabase.from('interviews').select('*').eq('id', interviewId).single();
+    if (intData) setInterview(intData);
+
+    // 2. Fetch batches (filter out archived)
+    const { data: batchData } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('is_archived', false)
+      .order('name');
+    if (batchData) setBatches(batchData);
+
+    // 3. Fetch all active students
+    const { data: studentData } = await supabase
+      .from('students')
+      .select('*')
+      .eq('is_archived', false)
+      .order('name');
+    if (studentData) setRegisteredStudents(studentData);
+  };
+
   const handleIndividualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    let finalStudentIds = [...selectedStudentIds];
+
+    // Handle new student if form is shown and filled
+    if (showNewStudentForm && newStudentData.email) {
+      setLoading(true);
+      try {
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id, is_archived')
+          .eq('email', newStudentData.email)
+          .single();
+
+        if (existingStudent?.is_archived) {
+          showToast(`Student with email ${newStudentData.email} is archived.`, 'error');
+          setLoading(false);
+          return;
+        }
+
+        if (existingStudent) {
+          if (!finalStudentIds.includes(existingStudent.id)) {
+            finalStudentIds.push(existingStudent.id);
+          }
+        } else {
+          const { data: newStudent, error: createError } = await supabase
+            .from('students')
+            .insert({ name: newStudentData.name, email: newStudentData.email })
+            .select()
+            .single();
+          if (createError) throw createError;
+          finalStudentIds.push(newStudent.id);
+        }
+      } catch (err: any) {
+        showToast('Error creating student: ' + err.message, 'error');
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (finalStudentIds.length === 0) {
+      showToast('Please select at least one student or add a new one.', 'warning');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-
     try {
-      // 1. Check if student exists
-      const { data: existingStudent } = await supabase
-        .from('students')
-        .select('id, is_archived')
-        .eq('email', formData.studentEmail)
-        .single();
+      // Create assignments for all selected students
+      const assignments = finalStudentIds.map(sid => ({
+        interview_id: interviewId,
+        student_id: sid,
+        scheduled_date: scheduleData.scheduledDate || null,
+        start_time: scheduleData.startTime || null,
+        duration: parseInt(scheduleData.duration.toString()) || 30,
+        status: 'pending'
+      }));
 
-      if (existingStudent?.is_archived) {
-        showToast('This student is archived and cannot be assigned new interviews.', 'error');
-        setLoading(false);
-        return;
-      }
+      const { error } = await supabase.from('interview_assignments').insert(assignments);
+      if (error) throw error;
 
-      let studentId;
-      if (existingStudent) {
-        studentId = existingStudent.id;
-      } else {
-        const { data: newStudent, error: createStudentError } = await supabase
-          .from('students').insert({ name: formData.studentName, email: formData.studentEmail }).select().single();
-        if (createStudentError) throw createStudentError;
-        studentId = newStudent.id;
-      }
+      // Notifications
+      const notifications = finalStudentIds.map(sid => ({
+        student_id: sid,
+        title: 'New Interview Assigned',
+        message: `You have been assigned: ${interview?.title}. Check your dashboard.`,
+        link: '/student/dashboard'
+      }));
+      await supabase.from('notifications').insert(notifications);
 
-      // 2. Check duplicate
-      const { data: existingAssignment } = await supabase
-        .from('interview_assignments').select('id, status').eq('interview_id', interviewId).eq('student_id', studentId).single();
-
-      if (existingAssignment) {
-        showToast(`This student already has this interview (${existingAssignment.status.toUpperCase()}).`, 'warning');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Create
-      const { error: assignmentError } = await supabase
-        .from('interview_assignments').insert({
-          interview_id: interviewId, student_id: studentId,
-          scheduled_date: formData.scheduledDate || null, 
-          start_time: formData.startTime || null,
-          duration: parseInt(formData.duration.toString()) || 30, 
-          status: 'pending'
-        });
-
-      if (assignmentError) throw assignmentError;
-
-      showToast('Interview assigned successfully!', 'success');
+      showToast(`Successfully assigned to ${finalStudentIds.length} student(s)!`, 'success');
       router.push(`/admin/view/${interviewId}`);
-    } catch (error: any) {
-      console.error('Individual Assignment Error:', error);
-      showToast('Error assigning interview: ' + (error.message || 'Unknown error'), 'error');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Assignment failed: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGroupSubmit = async (e: React.FormEvent) => {
+  const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedGroupId) {
-      showToast('Please select a group.', 'warning');
+    if (!selectedBatchId) {
+      showToast('Please select a batch.', 'warning');
       return;
     }
     
     setLoading(true);
-
     try {
-      // 1. Get all students in the group who are NOT archived
       const { data: members, error: membersError } = await supabase
         .from('group_members')
-        .select(`
-          student_id,
-          students!inner(is_archived)
-        `)
-        .eq('group_id', selectedGroupId)
+        .select(`student_id, students!inner(is_archived)`)
+        .eq('group_id', selectedBatchId)
         .eq('students.is_archived', false);
       
       if (membersError) throw membersError;
       if (!members || members.length === 0) {
-        showToast('Selected group has no active (non-archived) students.', 'warning');
+        showToast('Selected batch has no active students.', 'warning');
         setLoading(false);
         return;
       }
 
-      // 2. Get existing assignments to avoid duplicates
       const studentIds = members.map(m => m.student_id);
-      const { data: existingAssignments, error: existingError } = await supabase
-        .from('interview_assignments')
-        .select('student_id')
-        .eq('interview_id', interviewId)
-        .in('student_id', studentIds);
-      
-      if (existingError) throw existingError;
+      const assignments = studentIds.map(sid => ({
+        interview_id: interviewId,
+        student_id: sid,
+        group_id: selectedBatchId,
+        scheduled_date: scheduleData.scheduledDate || null,
+        start_time: scheduleData.startTime || null,
+        duration: parseInt(scheduleData.duration.toString()) || 30,
+        status: 'pending'
+      }));
 
-      const existingStudentIds = new Set(existingAssignments?.map(a => a.student_id) || []);
-      const newAssignments = members
-        .filter(m => !existingStudentIds.has(m.student_id))
-        .map(m => ({
-          interview_id: interviewId,
-          student_id: m.student_id,
-          group_id: selectedGroupId,
-          scheduled_date: formData.scheduledDate || null,
-          start_time: formData.startTime || null,
-          duration: parseInt(formData.duration.toString()) || 30,
-          status: 'pending'
-        }));
-
-      if (newAssignments.length === 0) {
-        showToast('All active students in this group already have this interview assigned.', 'warning');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Insert new assignments
-      const { error: insertError } = await supabase.from('interview_assignments').insert(newAssignments);
+      const { error: insertError } = await supabase.from('interview_assignments').insert(assignments);
       if (insertError) throw insertError;
 
-      showToast(`Assigned interview to ${newAssignments.length} student(s) successfully!`, 'success');
-      if (existingStudentIds.size > 0) {
-        showToast(`Skipped ${existingStudentIds.size} student(s) who were already assigned.`, 'info');
-      }
-      
+      const notifications = studentIds.map(sid => ({
+        student_id: sid,
+        title: 'New Interview Assigned',
+        message: `You have been assigned: ${interview?.title} as part of your batch.`,
+        link: '/student/dashboard'
+      }));
+      await supabase.from('notifications').insert(notifications);
+
+      showToast(`Assigned to ${studentIds.length} students!`, 'success');
       router.push(`/admin/view/${interviewId}`);
     } catch (error: any) {
-      console.error('Group Assignment Error:', error);
-      showToast('Error assigning group: ' + (error.message || 'Unknown error'), 'error');
+      showToast('Batch assignment failed: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredStudents = registeredStudents.filter(s => 
+    s.name.toLowerCase().includes(studentSearch.toLowerCase()) || 
+    s.email.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
   return (
-    <div className="container" style={{ maxWidth: '600px' }}>
-      <div className="flex-between" style={{ alignItems: 'flex-start' }}>
+    <div className="container" style={{ maxWidth: '700px' }}>
+      <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ marginBottom: '0.5rem' }}>Assign Interview</h2>
           {interview && (
@@ -192,76 +217,172 @@ export default function AssignInterview() {
             </p>
           )}
         </div>
-        <button 
-          onClick={() => router.back()} 
-          style={{ background: 'transparent', color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', fontSize: '1.25rem', lineHeight: 1, borderRadius: '6px', transition: 'all 0.2s ease' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-accent)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-        >
-          ✕
-        </button>
+        <button onClick={() => router.back()} style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)', padding: '0.5rem' }}>✕</button>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         <button 
           onClick={() => setAssignType('individual')}
-          style={{ background: 'transparent', color: assignType === 'individual' ? 'var(--accent-color)' : 'var(--text-secondary)', border: 'none', borderBottom: assignType === 'individual' ? '2px solid var(--accent-color)' : '2px solid transparent', padding: '0.5rem 1rem', borderRadius: 0, fontWeight: 600 }}
+          style={{ background: 'transparent', color: assignType === 'individual' ? 'var(--accent-color)' : 'var(--text-secondary)', border: 'none', borderBottom: assignType === 'individual' ? '3px solid var(--accent-color)' : '3px solid transparent', padding: '0.75rem 1.5rem', borderRadius: 0, fontWeight: 700, fontSize: '1rem' }}
         >
-          Individual Student
+          Select Students
         </button>
         <button 
-          onClick={() => setAssignType('group')}
-          style={{ background: 'transparent', color: assignType === 'group' ? 'var(--accent-color)' : 'var(--text-secondary)', border: 'none', borderBottom: assignType === 'group' ? '2px solid var(--accent-color)' : '2px solid transparent', padding: '0.5rem 1rem', borderRadius: 0, fontWeight: 600 }}
+          onClick={() => setAssignType('batch')}
+          style={{ background: 'transparent', color: assignType === 'batch' ? 'var(--accent-color)' : 'var(--text-secondary)', border: 'none', borderBottom: assignType === 'batch' ? '3px solid var(--accent-color)' : '3px solid transparent', padding: '0.75rem 1.5rem', borderRadius: 0, fontWeight: 700, fontSize: '1rem' }}
         >
-          Student Group
+          Select Batch
         </button>
       </div>
 
-      <div className="card">
-        <form onSubmit={assignType === 'individual' ? handleIndividualSubmit : handleGroupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {assignType === 'individual' ? (
-            <>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+        <div className="card" style={{ padding: '2rem' }}>
+          <form onSubmit={assignType === 'individual' ? handleIndividualSubmit : handleBatchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {assignType === 'individual' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Search & Select Registered Students */}
+                <div>
+                  <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                    <label style={{ fontWeight: 700, fontSize: '1.1rem' }}>Choose Registered Students</label>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--accent-color)', fontWeight: 600 }}>{selectedStudentIds.length} Selected</span>
+                  </div>
+                  
+                  <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+                    <input 
+                      type="text" 
+                      placeholder="Search students by name or email..." 
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      onFocus={() => setShowStudentList(true)}
+                      style={{ paddingLeft: '2.75rem' }}
+                    />
+                  </div>
+
+                  {showStudentList && (
+                    <div style={{ 
+                      maxHeight: '250px', 
+                      overflowY: 'auto', 
+                      border: '1px solid var(--border-color)', 
+                      borderRadius: '12px',
+                      background: 'rgba(0,0,0,0.1)',
+                      marginBottom: '1rem',
+                      animation: 'fadeIn 0.2s ease'
+                    }}>
+                      <div className="flex-between" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Registered Students</span>
+                        <button type="button" onClick={() => setShowStudentList(false)} style={{ background: 'transparent', padding: 0, color: 'var(--text-secondary)', fontSize: '0.7rem' }}>Close List</button>
+                      </div>
+                      {filteredStudents.length === 0 ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No students found</div>
+                      ) : (
+                        filteredStudents.map(student => (
+                          <div 
+                            key={student.id} 
+                            onClick={() => {
+                              if (selectedStudentIds.includes(student.id)) {
+                                setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                              } else {
+                                setSelectedStudentIds(prev => [...prev, student.id]);
+                              }
+                            }}
+                            style={{ 
+                              padding: '0.75rem 1rem', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '1rem', 
+                              cursor: 'pointer',
+                              borderBottom: '1px solid rgba(255,255,255,0.03)',
+                              background: selectedStudentIds.includes(student.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={selectedStudentIds.includes(student.id)} 
+                              onChange={() => {}} // Controlled by div click
+                              style={{ width: '18px', height: '18px' }}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600 }}>{student.name}</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{student.email}</div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* OR Divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>OR</span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                </div>
+
+                {/* Add New Student Form (Always Visible) */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-color)' }}>
+                    Add a New Student
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Name</label>
+                      <input 
+                        placeholder="Full Name" 
+                        value={newStudentData.name} 
+                        onChange={(e) => setNewStudentData({...newStudentData, name: e.target.value})} 
+                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Email</label>
+                      <input 
+                        type="email" 
+                        placeholder="Email Address" 
+                        value={newStudentData.email} 
+                        onChange={(e) => setNewStudentData({...newStudentData, email: e.target.value})} 
+                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Student Name</label>
-                <input required placeholder="e.g. John Doe" value={formData.studentName} onChange={(e) => setFormData({...formData, studentName: e.target.value})} />
+                <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700 }}>Select Batch</label>
+                <select required value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)} style={{ width: '100%', padding: '0.85rem' }}>
+                  <option value="">-- Choose a batch --</option>
+                  {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Schedule Section */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Scheduled Date</label>
+                  <input required type="date" value={scheduleData.scheduledDate} onChange={(e) => setScheduleData({...scheduleData, scheduledDate: e.target.value})} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Start Time</label>
+                  <input required type="time" value={scheduleData.startTime} onChange={(e) => setScheduleData({...scheduleData, startTime: e.target.value})} />
+                </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Student Email</label>
-                <input required type="email" placeholder="e.g. john@example.com" value={formData.studentEmail} onChange={(e) => setFormData({...formData, studentEmail: e.target.value})} />
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Duration (minutes)</label>
+                <input required type="number" min="10" max="180" value={scheduleData.duration} onChange={(e) => setScheduleData({...scheduleData, duration: parseInt(e.target.value)})} />
               </div>
-            </>
-          ) : (
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Select Group</label>
-              <select required value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '1rem' }}>
-                <option value="">-- Choose a group --</option>
-                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
             </div>
-          )}
 
-          {/* Common Schedule Fields */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Scheduled Date</label>
-              <input required type="date" value={formData.scheduledDate} onChange={(e) => setFormData({...formData, scheduledDate: e.target.value})} />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Start Time</label>
-              <input required type="time" value={formData.startTime} onChange={(e) => setFormData({...formData, startTime: e.target.value})} />
-            </div>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Duration (minutes)</label>
-            <input required type="number" min="10" max="180" value={formData.duration} onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value)})} />
-          </div>
-
-          <button type="submit" disabled={loading} style={{ marginTop: '1rem' }}>
-            {loading ? 'Assigning...' : (assignType === 'individual' ? 'Assign to Student' : 'Assign to Group')}
-          </button>
-        </form>
+            <button type="submit" disabled={loading} style={{ background: 'var(--accent-gradient)', padding: '1rem', fontSize: '1.1rem', fontWeight: 700, marginTop: '1rem' }}>
+              {loading ? 'Processing...' : 'Complete Assignment'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

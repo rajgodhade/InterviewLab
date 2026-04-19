@@ -22,7 +22,7 @@ export default function ViewInterviewQuestions() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewingGroup, setViewingGroup] = useState<any>(null);
+  const [viewingBatch, setViewingBatch] = useState<any>(null);
   const { showToast, showConfirm } = useUI();
 
   const handleRemove = async (assignmentId: string, studentName: string) => {
@@ -45,10 +45,10 @@ export default function ViewInterviewQuestions() {
     }
   };
 
-  const handleRemoveGroup = async (groupId: string, groupName: string) => {
+  const handleRemoveBatch = async (batchId: string, batchName: string) => {
     const confirmed = await showConfirm({
-      title: 'Remove Group Assignment',
-      message: `Are you sure you want to remove the entire group "${groupName}" from this interview? This will delete all assignments for students in this group.`,
+      title: 'Remove Batch Assignment',
+      message: `Are you sure you want to remove the entire batch "${batchName}" from this interview? This will delete all assignments for students in this batch.`,
       confirmText: 'Remove All',
       danger: true,
     });
@@ -59,14 +59,14 @@ export default function ViewInterviewQuestions() {
         .from('interview_assignments')
         .delete()
         .eq('interview_id', interviewId)
-        .eq('group_id', groupId);
+        .eq('group_id', batchId);
       
       if (error) throw error;
-      setAssignments((prev) => prev.filter((a) => a.group_id !== groupId));
-      showToast(`Group "${groupName}" removed successfully`, 'success');
+      setAssignments((prev) => prev.filter((a) => a.group_id !== batchId));
+      showToast(`Batch "${batchName}" removed successfully`, 'success');
     } catch (err: any) {
       console.error(err);
-      showToast('Failed to remove group: ' + err.message, 'error');
+      showToast('Failed to remove batch: ' + err.message, 'error');
     }
   };
 
@@ -123,7 +123,7 @@ export default function ViewInterviewQuestions() {
             <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assigned Students</h3>
           </div>
           <Link href={`/admin/assign/${interviewId}`}>
-            <button style={{ width: '100%', marginBottom: '1rem' }}>+ Assign Student/Group</button>
+            <button style={{ width: '100%', marginBottom: '1rem' }}>+ Assign Student/Batch</button>
           </Link>
           {assignments.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem 0', fontSize: '0.9rem' }}>No students assigned yet.</p>
@@ -131,12 +131,12 @@ export default function ViewInterviewQuestions() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {(() => {
                 const individual: any[] = [];
-                const groups: Record<string, { groupName: string; assignments: any[] }> = {};
+                const batches: Record<string, { batchName: string; assignments: any[] }> = {};
 
                 assignments.forEach(a => {
                   if (a.group_id && a.groups?.name) {
-                    if (!groups[a.group_id]) groups[a.group_id] = { groupName: a.groups.name, assignments: [] };
-                    groups[a.group_id].assignments.push(a);
+                    if (!batches[a.group_id]) batches[a.group_id] = { batchName: a.groups.name, assignments: [] };
+                    batches[a.group_id].assignments.push(a);
                   } else {
                     individual.push(a);
                   }
@@ -144,11 +144,11 @@ export default function ViewInterviewQuestions() {
 
                 return (
                   <>
-                    {/* Render Groups */}
-                    {Object.entries(groups).map(([groupId, groupData]: [string, any]) => (
+                    {/* Render Batches */}
+                    {Object.entries(batches).map(([batchId, batchData]: [string, any]) => (
                       <div 
-                        key={groupId} 
-                        onClick={() => setViewingGroup(groupData)}
+                        key={batchId} 
+                        onClick={() => setViewingBatch(batchData)}
                         style={{ 
                           padding: '0.85rem', 
                           background: 'var(--bg-primary)', 
@@ -167,8 +167,8 @@ export default function ViewInterviewQuestions() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <span style={{ fontSize: '1.2rem' }}>📁</span>
                           <div>
-                            <strong style={{ display: 'block' }}>{groupData.groupName}</strong>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Group ({groupData.assignments.length} members)</span>
+                            <strong style={{ display: 'block' }}>{batchData.batchName}</strong>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Batch ({batchData.assignments.length} members)</span>
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -176,9 +176,9 @@ export default function ViewInterviewQuestions() {
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRemoveGroup(groupId, groupData.groupName);
+                              handleRemoveBatch(batchId, batchData.batchName);
                             }}
-                            title="Remove entire group"
+                            title="Remove entire batch"
                             style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.2rem', padding: '0.2rem', lineHeight: 1 }}
                           >
                             ✕
@@ -271,20 +271,20 @@ export default function ViewInterviewQuestions() {
           )}
         </div>
       </div>
-      {/* Group Members Modal */}
-      {viewingGroup && (
+      {/* Batch Members Modal */}
+      {viewingBatch && (
         <div className="modal-overlay">
           <div className="card" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-between" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
               <div>
-                <h3 style={{ margin: 0 }}>{viewingGroup.groupName} Members</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.2rem 0 0 0' }}>{viewingGroup.assignments.length} Students assigned</p>
+                <h3 style={{ margin: 0 }}>{viewingBatch.batchName} Members</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.2rem 0 0 0' }}>{viewingBatch.assignments.length} Students assigned</p>
               </div>
-              <button onClick={() => setViewingGroup(null)} style={{ background: 'transparent', fontSize: '1.5rem', color: 'var(--text-secondary)', padding: 0 }}>✕</button>
+              <button onClick={() => setViewingBatch(null)} style={{ background: 'transparent', fontSize: '1.5rem', color: 'var(--text-secondary)', padding: 0 }}>✕</button>
             </div>
             
             <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '0.5rem' }}>
-              {viewingGroup.assignments.map((a: any) => (
+              {viewingBatch.assignments.map((a: any) => (
                 <div key={a.id} className="flex-between" style={{ padding: '0.85rem', background: 'var(--bg-accent)', borderRadius: '8px' }}>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                     <div style={{ 
@@ -313,7 +313,7 @@ export default function ViewInterviewQuestions() {
                     <button 
                       onClick={() => {
                         handleRemove(a.id, a.students?.name);
-                        setViewingGroup(null);
+                        setViewingBatch(null);
                       }}
                       style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.1rem', padding: 0 }}
                     >
@@ -324,7 +324,7 @@ export default function ViewInterviewQuestions() {
               ))}
             </div>
             
-            <button onClick={() => setViewingGroup(null)} style={{ marginTop: '1.5rem', width: '100%', background: 'var(--bg-accent)' }}>Close</button>
+            <button onClick={() => setViewingBatch(null)} style={{ marginTop: '1.5rem', width: '100%', background: 'var(--bg-accent)' }}>Close</button>
           </div>
         </div>
       )}

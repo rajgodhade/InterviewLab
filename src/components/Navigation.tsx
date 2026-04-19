@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -13,15 +14,58 @@ export default function Navigation() {
   // Determine if we are IN an interview (not just on student portal)
   const isInsideInterview = pathname?.startsWith('/interview/');
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // Close menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [pathname]);
 
+  // Fetch unread notifications for students
+  useEffect(() => {
+    if (isStudentRoute) {
+      const email = localStorage.getItem('student_email');
+      if (email) {
+        fetchUnreadCount(email);
+        
+        // Setup Realtime Subscription
+        const channel = supabase
+          .channel('nav-notifications')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'notifications' },
+            () => fetchUnreadCount(email)
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }
+    }
+  }, [isStudentRoute, pathname]);
+
+  const fetchUnreadCount = async (email: string) => {
+    try {
+      const { data: student } = await supabase.from('students').select('id').eq('email', email).single();
+      if (!student) return;
+
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_id', student.id)
+        .eq('is_read', false);
+
+      setUnreadCount(count || 0);
+    } catch (err) {
+      console.error('Error fetching unread count:', err);
+    }
+  };
+
   const navLinks = !isStudentRoute ? (
     <>
       <Link href="/admin" style={{ fontSize: '0.9rem', color: pathname === '/admin' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin' ? 700 : 500 }}>Dashboard</Link>
-      <Link href="/admin/groups" style={{ fontSize: '0.9rem', color: pathname === '/admin/groups' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/groups' ? 700 : 500 }}>Groups</Link>
+      <Link href="/admin/batches" style={{ fontSize: '0.9rem', color: pathname === '/admin/batches' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/batches' ? 700 : 500 }}>Batches</Link>
       <Link href="/admin/students" style={{ fontSize: '0.9rem', color: pathname === '/admin/students' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/students' ? 700 : 500 }}>Students</Link>
       <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/admin/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
       <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: pathname === '/admin/monitor' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/monitor' ? 700 : 500 }}>Monitor</Link>
@@ -32,6 +76,30 @@ export default function Navigation() {
     <>
       <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: pathname === '/student/dashboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/dashboard' ? 700 : 500 }}>My Interviews</Link>
       <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/student/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
+      <Link href="/student/inbox" style={{ 
+        fontSize: '0.9rem', 
+        color: pathname === '/student/inbox' ? 'var(--accent-color)' : 'inherit', 
+        textDecoration: 'none', 
+        fontWeight: pathname === '/student/inbox' ? 700 : 500,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.4rem'
+      }}>
+        Inbox
+        {unreadCount > 0 && (
+          <span style={{ 
+            background: 'var(--accent-color)', 
+            color: '#fff', 
+            fontSize: '0.65rem', 
+            padding: '0.1rem 0.4rem', 
+            borderRadius: '10px', 
+            fontWeight: 800,
+            animation: 'pulse 2s infinite'
+          }}>
+            {unreadCount}
+          </span>
+        )}
+      </Link>
     </>
   );
 
@@ -84,6 +152,11 @@ export default function Navigation() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+          70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
       `}</style>
     </nav>

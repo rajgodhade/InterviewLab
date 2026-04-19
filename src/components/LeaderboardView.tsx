@@ -18,10 +18,10 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
   const { showToast } = useUI();
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [technologies, setTechnologies] = useState<string[]>([]);
   
-  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [selectedBatch, setSelectedBatch] = useState<string>('all');
   const [selectedTech, setSelectedTech] = useState<string>('all');
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [selectedGroup, selectedTech]);
+  }, [selectedBatch, selectedTech]);
 
   const fetchInitialData = async () => {
     try {
-      const { data: groupData } = await supabase.from('groups').select('*');
-      setGroups(groupData || []);
+      const { data: batchData } = await supabase.from('groups').select('*');
+      setBatches(batchData || []);
 
       const { data: techData } = await supabase.from('interviews').select('technology');
       const uniqueTechs = Array.from(new Set((techData || []).map(t => t.technology)));
@@ -60,8 +60,8 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
         .eq('status', 'completed')
         .not('final_score', 'is', null);
 
-      if (selectedGroup !== 'all') {
-        query = query.eq('group_id', selectedGroup);
+      if (selectedBatch !== 'all') {
+        query = query.eq('group_id', selectedBatch);
       }
 
       const { data, error } = await query;
@@ -129,19 +129,19 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
               {isAdmin 
                 ? 'Comprehensive student ranking and technical analytics dashboard.' 
-                : "Real-time rankings for the top tech talent in your group."}
+                : "Real-time rankings for the top tech talent in your batch."}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <select 
-              value={selectedGroup} 
-              onChange={(e) => setSelectedGroup(e.target.value)}
+              value={selectedBatch} 
+              onChange={(e) => setSelectedBatch(e.target.value)}
               style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.6rem 1rem', fontSize: '0.9rem', color: 'var(--text-primary)', cursor: 'pointer' }}
             >
-              <option value="all">All Groups</option>
-              {groups.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
+              <option value="all">All Batches</option>
+              {batches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
 

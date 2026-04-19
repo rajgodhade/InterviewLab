@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
 
-export default function CreateGroup() {
+export default function CreateBatch() {
   const router = useRouter();
   const { showToast } = useUI();
   const [loading, setLoading] = useState(false);
@@ -22,11 +22,11 @@ export default function CreateGroup() {
       const { error } = await supabase.from('groups').insert([formData]);
       if (error) throw error;
 
-      showToast('Group created successfully!', 'success');
-      router.push('/admin/groups');
+      showToast('Batch created successfully!', 'success');
+      router.push('/admin/batches');
     } catch (err: any) {
       console.error(err);
-      showToast('Error creating group: ' + err.message, 'error');
+      showToast('Error creating batch: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -35,7 +35,7 @@ export default function CreateGroup() {
   return (
     <div className="container" style={{ maxWidth: '600px' }}>
       <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0 }}>Create Student Group</h2>
+        <h2 style={{ margin: 0 }}>Create Student Batch</h2>
         <button 
           onClick={() => router.back()} 
           style={{ 
@@ -59,7 +59,7 @@ export default function CreateGroup() {
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Group Name</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Batch Name</label>
             <input 
               required
               placeholder="e.g. React Native Batch - Morning"
@@ -70,7 +70,7 @@ export default function CreateGroup() {
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Description (Optional)</label>
             <textarea 
-              placeholder="Brief description of the group..."
+              placeholder="Brief description of the batch..."
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               style={{ minHeight: '100px', resize: 'vertical' }}
@@ -78,7 +78,7 @@ export default function CreateGroup() {
           </div>
           
           <button type="submit" disabled={loading} style={{ marginTop: '1rem' }}>
-            {loading ? 'Creating...' : 'Create Group'}
+            {loading ? 'Creating...' : 'Create Batch'}
           </button>
         </form>
       </div>

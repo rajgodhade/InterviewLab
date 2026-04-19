@@ -5,13 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
 
-export default function ManageGroup() {
+export default function ManageBatch() {
   const params = useParams();
   const router = useRouter();
   const { showToast, showConfirm } = useUI();
-  const groupId = params.group_id as string;
+  const batchId = params.batch_id as string;
 
-  const [group, setGroup] = useState<any>(null);
+  const [batch, setBatch] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,24 +21,24 @@ export default function ManageGroup() {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    fetchGroupDetails();
-  }, [groupId]);
+    fetchBatchDetails();
+  }, [batchId]);
 
-  const fetchGroupDetails = async () => {
+  const fetchBatchDetails = async () => {
     try {
-      const { data: gData, error: gError } = await supabase.from('groups').select('*').eq('id', groupId).single();
-      if (gError) throw gError;
-      setGroup(gData);
+      const { data: bData, error: bError } = await supabase.from('groups').select('*').eq('id', batchId).single();
+      if (bError) throw bError;
+      setBatch(bData);
 
       const { data: mData, error: mError } = await supabase
         .from('group_members')
         .select('id, students(*)')
-        .eq('group_id', groupId);
+        .eq('group_id', batchId);
       if (mError) throw mError;
       setMembers(mData || []);
     } catch (err: any) {
       console.error(err);
-      showToast('Failed to load group details: ' + err.message, 'error');
+      showToast('Failed to load batch details: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -74,31 +74,31 @@ export default function ManageGroup() {
         studentId = newStudent.id;
       }
 
-      // 2. Check if already in group
+      // 2. Check if already in batch
       const { data: existingMember } = await supabase
         .from('group_members')
         .select('id')
-        .eq('group_id', groupId)
+        .eq('group_id', batchId)
         .eq('student_id', studentId)
         .single();
 
       if (existingMember) {
-        showToast('Student is already in this group.', 'warning');
+        showToast('Student is already in this batch.', 'warning');
         setAdding(false);
         return;
       }
 
-      // 3. Add to group
+      // 3. Add to batch
       const { error: memberError } = await supabase
         .from('group_members')
-        .insert({ group_id: groupId, student_id: studentId });
+        .insert({ group_id: batchId, student_id: studentId });
       
       if (memberError) throw memberError;
 
-      showToast('Student added to group successfully!', 'success');
+      showToast('Student added to batch successfully!', 'success');
       setStudentName('');
       setStudentEmail('');
-      fetchGroupDetails(); // refresh list
+      fetchBatchDetails(); // refresh list
     } catch (err: any) {
       console.error(err);
       showToast('Failed to add student: ' + err.message, 'error');
@@ -110,7 +110,7 @@ export default function ManageGroup() {
   const handleRemoveStudent = async (memberId: string, studentName: string) => {
     const confirmed = await showConfirm({
       title: 'Remove Student',
-      message: `Are you sure you want to remove ${studentName} from this group?`,
+      message: `Are you sure you want to remove ${studentName} from this batch?`,
       confirmText: 'Remove',
       danger: true,
     });
@@ -121,25 +121,25 @@ export default function ManageGroup() {
       if (error) throw error;
 
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
-      showToast('Student removed from group', 'success');
+      showToast('Student removed from batch', 'success');
     } catch (err: any) {
       console.error(err);
       showToast('Failed to remove student: ' + err.message, 'error');
     }
   };
 
-  if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading group...</div>;
-  if (!group) return <div className="container">Group not found.</div>;
+  if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading batch...</div>;
+  if (!batch) return <div className="container">Batch not found.</div>;
 
   return (
     <div className="container">
       <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '2rem' }}>
         <div>
-          <h2 style={{ marginBottom: '0.5rem' }}>{group.name}</h2>
-          {group.description && <p style={{ color: 'var(--text-secondary)' }}>{group.description}</p>}
+          <h2 style={{ marginBottom: '0.5rem' }}>{batch.name}</h2>
+          {batch.description && <p style={{ color: 'var(--text-secondary)' }}>{batch.description}</p>}
         </div>
         <button 
-          onClick={() => router.push('/admin/groups')} 
+          onClick={() => router.push('/admin/batches')} 
           style={{ 
             background: 'transparent', color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', 
             fontSize: '1.25rem', lineHeight: 1, borderRadius: '6px', transition: 'all 0.2s ease',
@@ -152,7 +152,7 @@ export default function ManageGroup() {
             e.currentTarget.style.background = 'transparent';
             e.currentTarget.style.color = 'var(--text-secondary)';
           }}
-          title="Back to Groups"
+          title="Back to Batches"
         >
           ✕
         </button>
@@ -161,7 +161,7 @@ export default function ManageGroup() {
       <div style={{ display: 'grid', gridTemplateColumns: '4fr 8fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* LEFT: Add Student Form */}
         <div className="card" style={{ position: 'sticky', top: '1rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>Add Student to Group</h3>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>Add Student to Batch</h3>
           <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.9rem' }}>Name</label>
@@ -191,12 +191,12 @@ export default function ManageGroup() {
         {/* RIGHT: Members List */}
         <div className="card">
           <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Group Members ({members.length})</h3>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Batch Members ({members.length})</h3>
           </div>
 
           {members.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-              <p style={{ color: 'var(--text-secondary)' }}>No students in this group yet.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No students in this batch yet.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
