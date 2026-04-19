@@ -99,41 +99,134 @@ export default function StudentInbox() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {notifications.map((n) => (
             <div 
               key={n.id} 
-              className="card" 
+              className="inbox-item"
               style={{ 
-                padding: '1.5rem', 
-                borderLeft: n.is_read ? '1px solid var(--border-color)' : '4px solid var(--accent-color)',
-                background: n.is_read ? 'var(--glass-bg)' : 'rgba(59, 130, 246, 0.05)',
+                padding: '1.25rem 1.5rem', 
+                background: n.is_read ? 'transparent' : 'rgba(59, 130, 246, 0.03)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
-                gap: '1.5rem',
-                alignItems: 'flex-start',
-                transition: 'all 0.2s ease'
+                gap: '1.25rem',
+                alignItems: 'center',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <div style={{ fontSize: '1.5rem', background: 'var(--bg-accent)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {n.title.includes('Assigned') ? '📝' : '🔔'}
+              {!n.is_read && (
+                <div style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: 'var(--accent-color)', 
+                  position: 'absolute', 
+                  left: '0.5rem', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
+                  boxShadow: '0 0 10px var(--accent-color)'
+                }}></div>
+              )}
+
+              <div style={{ 
+                fontSize: '1.2rem', 
+                background: n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(59, 130, 246, 0.1)', 
+                width: '42px', 
+                height: '42px', 
+                borderRadius: '12px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                flexShrink: 0,
+                color: n.is_read ? 'var(--text-secondary)' : 'var(--accent-color)'
+              }}>
+                {n.title.includes('Assigned') ? '📂' : '✨'}
               </div>
-              <div style={{ flex: 1 }}>
-                <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: n.is_read ? 'var(--text-primary)' : 'var(--accent-color)' }}>{n.title}</h4>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(n.created_at).toLocaleDateString()}</span>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="flex-between" style={{ marginBottom: '0.25rem' }}>
+                  <h4 style={{ 
+                    margin: 0, 
+                    fontSize: '1rem', 
+                    fontWeight: n.is_read ? 500 : 700, 
+                    color: n.is_read ? 'var(--text-secondary)' : 'var(--text-primary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {n.title}
+                  </h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7, whiteSpace: 'nowrap', marginLeft: '1rem' }}>
+                    {new Date(n.created_at).toLocaleDateString()}
+                  </span>
                 </div>
-                <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{n.message}</p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {n.link && (
-                    <Link href={n.link} onClick={() => markAsRead(n.id)}>
-                      <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--accent-gradient)' }}>View Details</button>
-                    </Link>
-                  )}
-                  {!n.is_read && (
-                    <button onClick={() => markAsRead(n.id)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--bg-accent)' }}>Mark as Read</button>
-                  )}
-                  <button onClick={() => deleteNotification(n.id)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'transparent', color: 'var(--danger)', border: 'none' }}>Delete</button>
-                </div>
+                <p style={{ 
+                  margin: 0, 
+                  color: 'var(--text-secondary)', 
+                  fontSize: '0.9rem',
+                  lineHeight: 1.4,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  opacity: n.is_read ? 0.6 : 0.9
+                }}>
+                  {n.message}
+                </p>
+              </div>
+
+              <div className="item-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {n.link && (
+                  <Link href={n.link} onClick={() => markAsRead(n.id)}>
+                    <button style={{ 
+                      padding: '0.5rem 1rem', 
+                      fontSize: '0.75rem', 
+                      background: 'var(--accent-color)', 
+                      borderRadius: '8px',
+                      height: '34px'
+                    }}>View</button>
+                  </Link>
+                )}
+                {!n.is_read && (
+                  <button 
+                    onClick={() => markAsRead(n.id)} 
+                    title="Mark as read"
+                    style={{ 
+                      background: 'rgba(255,255,255,0.05)', 
+                      padding: '0',
+                      width: '34px',
+                      height: '34px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.9rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)'
+                    }}
+                  >
+                    ✓
+                  </button>
+                )}
+                <button 
+                  onClick={() => deleteNotification(n.id)} 
+                  title="Delete"
+                  style={{ 
+                    background: 'transparent', 
+                    padding: '0',
+                    width: '34px',
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.9rem',
+                    color: 'var(--danger)',
+                    borderRadius: '8px',
+                    opacity: 0.6
+                  }}
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))}
@@ -148,6 +241,18 @@ export default function StudentInbox() {
           border-radius: 50%;
           border-top-color: var(--accent-color);
           animation: spin 1s linear infinite;
+        }
+        .inbox-item:hover {
+          background: rgba(255,255,255,0.02) !important;
+        }
+        .item-actions {
+          opacity: 0;
+          transform: translateX(10px);
+          transition: all 0.2s ease;
+        }
+        .inbox-item:hover .item-actions {
+          opacity: 1;
+          transform: translateX(0);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

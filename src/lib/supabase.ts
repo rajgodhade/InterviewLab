@@ -15,6 +15,7 @@ export type Interview = {
   technology: string;
   mode: 'AI' | 'Custom';
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  is_offline_mode?: boolean;
   created_at: string;
 };
 

@@ -387,6 +387,15 @@ export default function AdminDashboard() {
                     }}>
                       {interview.mode}
                     </span>
+                    {interview.is_offline_mode && (
+                      <span style={{ 
+                        background: 'rgba(239, 68, 68, 0.15)', 
+                        color: '#f87171', 
+                        padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(239, 68, 68, 0.2)'
+                      }}>
+                        Offline
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -463,6 +472,7 @@ export default function AdminDashboard() {
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>💻 {interview.technology}</span>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>🎯 {interview.difficulty}</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-color)', background: 'rgba(59,130,246,0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>{interview.mode}</span>
+                    {interview.is_offline_mode && <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>Offline</span>}
                   </div>
                 </div>
 

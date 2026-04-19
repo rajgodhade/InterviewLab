@@ -69,12 +69,14 @@ export default function Navigation() {
       <Link href="/admin/students" style={{ fontSize: '0.9rem', color: pathname === '/admin/students' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/students' ? 700 : 500 }}>Students</Link>
       <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/admin/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
       <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: pathname === '/admin/monitor' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/monitor' ? 700 : 500 }}>Monitor</Link>
+      <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: pathname === '/admin/study-material' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/study-material' ? 700 : 500 }}>Study Material</Link>
     </>
   ) : isInsideInterview ? (
     <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Interview in Progress...</span>
   ) : (
     <>
       <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: pathname === '/student/dashboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/dashboard' ? 700 : 500 }}>My Interviews</Link>
+      <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: pathname === '/student/study-material' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/study-material' ? 700 : 500 }}>Study Material</Link>
       <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/student/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
       <Link href="/student/inbox" style={{ 
         fontSize: '0.9rem', 

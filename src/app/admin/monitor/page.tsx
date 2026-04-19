@@ -96,6 +96,10 @@ export default function AdminMonitorPage() {
         <div>
           <h1 style={{ margin: 0 }}>Live Monitor</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Track all students currently attempting interviews in real-time.</p>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>⚠️</span>
+            <span>Note: Interviews in <strong>Offline Mode</strong> cannot be tracked in real-time.</span>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
           <span style={{ width: '10px', height: '10px', background: 'var(--success)', borderRadius: '50%', boxShadow: '0 0 10px var(--success)' }}></span>
@@ -112,6 +116,9 @@ export default function AdminMonitorPage() {
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📡</div>
           <h3>No active sessions</h3>
           <p style={{ color: 'var(--text-secondary)' }}>When students start an interview, they will appear here automatically.</p>
+          <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#f59e0b', padding: '0.5rem 1rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+            <strong>Offline Mode Notice:</strong> Students taking interviews offline will not appear here until they sync their results.
+          </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>

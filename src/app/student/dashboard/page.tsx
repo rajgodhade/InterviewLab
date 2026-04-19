@@ -50,6 +50,25 @@ export default function StudentDashboard() {
 
         if (assignmentError) throw assignmentError;
         setAssignments(assignmentData || []);
+
+        // OFFLINE PRE-FETCH LOGIC
+        const offlineAssignments = (assignmentData || []).filter(a => a.interviews?.is_offline_mode && a.status === 'pending');
+        if (offlineAssignments.length > 0) {
+          console.log('Detecting offline interviews, pre-fetching questions...');
+          for (const ass of offlineAssignments) {
+            const { data: qData, error: qError } = await supabase
+              .from('questions')
+              .select('*')
+              .eq('interview_id', ass.interview_id)
+              .order('order_index', { ascending: true });
+            
+            if (!qError && qData) {
+              localStorage.setItem(`offline_questions_${ass.id}`, JSON.stringify(qData));
+              localStorage.setItem(`offline_assignment_${ass.id}`, JSON.stringify(ass));
+              console.log(`Pre-fetched ${qData.length} questions for assignment ${ass.id}`);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error(error);
@@ -190,7 +209,16 @@ export default function StudentDashboard() {
                   return (
                     <tr key={assignment.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
-                        <div style={{ fontWeight: 700 }}>{assignment.interviews?.title}</div>
+                        <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {assignment.interviews?.title}
+                          {assignment.interviews?.is_offline_mode && (
+                            <span style={{ 
+                              background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', 
+                              fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '4px',
+                              border: '1px solid rgba(239,68,68,0.2)', fontWeight: 800
+                            }}>OFFLINE</span>
+                          )}
+                        </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{assignment.interviews?.technology} • {assignment.duration} mins</div>
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

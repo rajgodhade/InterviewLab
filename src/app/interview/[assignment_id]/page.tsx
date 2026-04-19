@@ -18,6 +18,8 @@ export default function InterviewSession() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSync, setPendingSync] = useState(false);
 
   useEffect(() => {
     fetchInterviewData();
@@ -44,9 +46,28 @@ export default function InterviewSession() {
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
 
+    const handleOnlineStatus = async () => {
+      if (navigator.onLine) {
+        // Double check with a real external fetch
+        try {
+          await fetch('https://cloudflare.com/cdn-cgi/trace?' + Date.now(), { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(3000) });
+          setIsOnline(true); // Opaque response means success (no network error)
+        } catch (e) {
+          setIsOnline(false); // Fetch failed, treat as offline
+        }
+      } else {
+        setIsOnline(false);
+      }
+    };
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+    handleOnlineStatus();
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
     };
   }, [assignmentId, submitted]);
 
@@ -60,11 +81,35 @@ export default function InterviewSession() {
   }, [timeLeft, loading, assignment, submitted]);
 
   const fetchInterviewData = async () => {
+    if (!assignmentId) {
+      setLoading(false);
+      return;
+    }
+
+    // IMMEDIATE OFFLINE CHECK: If we are offline, don't even try Supabase yet
+    if (!navigator.onLine) {
+      const offlineQ = localStorage.getItem(`offline_questions_${assignmentId}`);
+      const offlineA = localStorage.getItem(`offline_assignment_${assignmentId}`);
+      if (offlineQ && offlineA) {
+        console.log('Device is offline, loading from local storage...');
+        setQuestions(JSON.parse(offlineQ));
+        setAssignment(JSON.parse(offlineA));
+        handleOfflineStart(JSON.parse(offlineA));
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const { data: ad, error: ae } = await supabase
         .from('interview_assignments').select('*, interviews(*)').eq('id', assignmentId).single();
+      
       if (ae) throw ae;
-      if (ad.status === 'completed') { showToast('This interview has already been completed.', 'warning'); router.push('/student/dashboard'); return; }
+      if (ad.status === 'completed') { 
+        showToast('This interview has already been completed.', 'warning'); 
+        router.push('/student/dashboard'); 
+        return; 
+      }
       
       setAssignment(ad);
 
@@ -73,7 +118,6 @@ export default function InterviewSession() {
       if (savedAnswers) {
         try {
           setAnswers(JSON.parse(savedAnswers));
-          showToast('Draft answers restored from local storage.', 'success');
         } catch (e) {
           console.error('Failed to parse saved answers', e);
         }
@@ -108,9 +152,44 @@ export default function InterviewSession() {
       const { data: qd, error: qe } = await supabase
         .from('questions').select('*').eq('interview_id', ad.interview_id).order('order_index', { ascending: true });
       if (qe) throw qe;
-      setQuestions(qd || []);
-    } catch (error) { console.error(error); showToast('Failed to load interview.', 'error'); }
+      const questionsData = qd || [];
+      setQuestions(questionsData);
+
+      // CRITICAL: Save everything locally immediately so offline mode has data even if pre-fetch failed
+      localStorage.setItem(`offline_questions_${assignmentId}`, JSON.stringify(questionsData));
+      localStorage.setItem(`offline_assignment_${assignmentId}`, JSON.stringify(ad));
+      
+      console.log('Interview data fully loaded and cached locally.');
+    } catch (error) { 
+      // Network fetch failed (expected when offline), checking offline fallback
+      const offlineQ = localStorage.getItem(`offline_questions_${assignmentId}`);
+      const offlineA = localStorage.getItem(`offline_assignment_${assignmentId}`);
+      if (offlineQ && offlineA) {
+        setQuestions(JSON.parse(offlineQ));
+        setAssignment(JSON.parse(offlineA));
+        handleOfflineStart(JSON.parse(offlineA));
+        showToast('Running in Offline Mode. Connect Your Internet Connection', 'warning');
+      } else {
+        showToast('Failed to load interview. Please check your connection.', 'error'); 
+      }
+    }
     finally { setLoading(false); }
+  };
+
+  const handleOfflineStart = (ad: any) => {
+    // Timer logic for offline
+    const localStartTime = localStorage.getItem(`interview_start_${assignmentId}`);
+    const now = new Date();
+    let startTime: number;
+    if (!localStartTime) {
+      startTime = now.getTime();
+      localStorage.setItem(`interview_start_${assignmentId}`, now.toISOString());
+    } else {
+      startTime = new Date(localStartTime).getTime();
+    }
+    const elapsed = Math.floor((now.getTime() - startTime) / 1000);
+    const total = ad.duration * 60;
+    setTimeLeft(Math.max(0, total - elapsed));
   };
 
   // HEARTBEAT LOGIC: Update last_seen_at every 30 seconds
@@ -118,13 +197,33 @@ export default function InterviewSession() {
     if (loading || submitted || !assignmentId) return;
 
     const interval = setInterval(async () => {
-      await supabase.from('interview_assignments')
-        .update({ last_seen_at: new Date().toISOString(), is_live: true })
-        .eq('id', assignmentId);
+      if (navigator.onLine && !assignment?.interviews?.is_offline_mode) {
+        await supabase.from('interview_assignments')
+          .update({ last_seen_at: new Date().toISOString(), is_live: true })
+          .eq('id', assignmentId);
+      }
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
   }, [loading, submitted, assignmentId]);
+
+  // CONNECTION POLLING: Re-verify connection if browser says online but we think we are offline
+  useEffect(() => {
+    if (submitted || !assignment?.interviews?.is_offline_mode) return;
+
+    const interval = setInterval(async () => {
+      if (navigator.onLine && !isOnline) {
+        try {
+          await fetch('https://cloudflare.com/cdn-cgi/trace?' + Date.now(), { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(3000) });
+          setIsOnline(true); // Internet fully connected, lock the screen!
+        } catch (e) {
+          // Still offline according to deep ping
+        }
+      }
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [assignment, isOnline, submitted]);
 
   const setAnswer = (val: string) => {
     const newAnswers = { ...answers, [questions[currentQuestionIndex].id]: val };
@@ -154,13 +253,29 @@ export default function InterviewSession() {
     }
 
     setSubmitted(true);
+    
+    // OFFLINE MODE SYNC LOGIC
+    if (!isOnline && assignment?.interviews?.is_offline_mode) {
+      // Save for later sync
+      localStorage.setItem(`pending_sync_${assignmentId}`, JSON.stringify({
+        answers,
+        submitted_at: new Date().toISOString()
+      }));
+      setPendingSync(true);
+      showToast('Interview saved locally. Please reconnect to the internet to sync your answers.', 'warning');
+      return;
+    }
+
+    await performSync(answers);
+  };
+
+  const performSync = async (answersToSync: any) => {
     try {
       // Calculate score
       let finalScore = 0;
       questions.forEach(q => {
-        const studentAns = (answers[q.id] || '').trim().toLowerCase();
+        const studentAns = (answersToSync[q.id] || '').trim().toLowerCase();
         const expectedAns = (q.expected_answer || '').trim().toLowerCase();
-        // Exact match for MCQ/Short Answer. Long answers won't auto-score perfectly but this is a base.
         if (studentAns === expectedAns && expectedAns !== '') {
           finalScore++;
         }
@@ -169,7 +284,7 @@ export default function InterviewSession() {
       const responsesToInsert = questions.map(q => ({
         assignment_id: assignmentId,
         question_id: q.id,
-        answer_text: answers[q.id] || 'Not Answered'
+        answer_text: answersToSync[q.id] || 'Not Answered'
       }));
 
       if (responsesToInsert.length > 0) {
@@ -187,13 +302,37 @@ export default function InterviewSession() {
 
       // Clear local storage on successful submission
       localStorage.removeItem(`interview_progress_${assignmentId}`);
+      localStorage.removeItem(`pending_sync_${assignmentId}`);
+      localStorage.removeItem(`interview_start_${assignmentId}`);
 
-      showToast('Interview submitted successfully!', 'success');
+      showToast('Interview synced successfully!', 'success');
       router.push('/student/dashboard');
-    } catch (error) { 
-      console.error(error); 
-      showToast('Failed to submit interview.', 'error'); 
+    } catch (error: any) { 
+      const errorName = error?.name || 'UnknownErrorName';
+      const errorMsg = error?.message || error?.details || 'No message';
+      
+      showToast(`Failed to sync interview: [${errorName}] ${errorMsg}`, 'error'); 
       setSubmitted(false); 
+      setPendingSync(true);
+    }
+  };
+
+  const recheckConnection = async () => {
+    try {
+      await fetch('https://cloudflare.com/cdn-cgi/trace?' + Date.now(), { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(3000) });
+      setIsOnline(true); // Opaque response means success (no network error)
+      if (!submitted) {
+        showToast('Still detecting an active internet connection.', 'error');
+      } else {
+        showToast('Internet connection restored!', 'success');
+      }
+    } catch (e) {
+      setIsOnline(false);
+      if (!submitted) {
+        showToast('Offline status confirmed. Unlocking...', 'success');
+      } else {
+        showToast('Still no internet connection detected.', 'error');
+      }
     }
   };
 
@@ -214,7 +353,83 @@ export default function InterviewSession() {
   const badge = typeBadge[q.question_type] || typeBadge.short_answer;
 
   return (
-    <div className="container" style={{ maxWidth: '800px' }}>
+    <div className="container" style={{ maxWidth: '800px', position: 'relative' }}>
+      {/* Black Screen Overlay for Offline Mode */}
+      {assignment?.interviews?.is_offline_mode && isOnline && !submitted && !pendingSync && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: '#000', color: '#fff', zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          textAlign: 'center', padding: '2rem'
+        }}>
+          <h1 style={{ color: '#ef4444', marginBottom: '1.5rem' }}>Internet Connection Detected</h1>
+          <p style={{ fontSize: '1.2rem', maxWidth: '600px', lineHeight: '1.6' }}>
+            This interview is set to <strong>Offline Mode</strong>. You are not allowed to have an active internet connection.
+          </p>
+          <div style={{ margin: '2rem 0', padding: '1.5rem', border: '1px dashed #ef4444', borderRadius: '12px', background: 'rgba(239,68,68,0.05)' }}>
+            <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please disconnect your internet to continue.</p>
+            <div style={{ fontSize: '0.85rem', color: '#ef4444' }}>
+              Current Status: <strong>{isOnline ? 'ONLINE' : 'OFFLINE'}</strong>
+            </div>
+          </div>
+          <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>The interview content is fully loaded and ready. The screen will automatically unlock once you are offline.</p>
+          
+          <button 
+            onClick={recheckConnection}
+            style={{ 
+              background: 'var(--accent-gradient)', 
+              color: '#fff', border: 'none',
+              padding: '0.85rem 2rem', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
+              boxShadow: '0 4px 12px rgba(59,130,246,0.3)'
+            }}
+          >
+            <span>↻</span> I have disconnected. Re-check now.
+          </button>
+        </div>
+      )}
+
+      {/* Pending Sync Overlay */}
+      {pendingSync && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', color: '#fff', zIndex: 9998,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          textAlign: 'center', padding: '2rem'
+        }}>
+          <div className="card" style={{ maxWidth: '500px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+            <h2 style={{ marginBottom: '1rem' }}>Interview Completed!</h2>
+            <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
+              Your answers have been saved locally. Please <strong>reconnect to the internet</strong> to sync your results with the server.
+            </p>
+            
+            {!isOnline ? (
+              <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                <span>Offline: Please enable your internet.</span>
+                <button 
+                  onClick={recheckConnection}
+                  style={{ background: 'transparent', border: '1px solid currentColor', color: 'inherit', padding: '0.25rem 0.75rem', fontSize: '0.8rem', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Re-check Connection
+                </button>
+              </div>
+            ) : (
+              <div style={{ padding: '1rem', background: 'rgba(16,185,129,0.1)', color: 'var(--success)', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                Connected! You can now sync your data.
+              </div>
+            )}
+
+            {isOnline && (
+              <button 
+                onClick={() => performSync(answers)}
+                style={{ width: '100%', background: 'var(--accent-gradient)' }}
+              >
+                Sync to Server Now
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* Header bar */}
       <div className="flex-between" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)' }}>
         <div>

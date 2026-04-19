@@ -15,6 +15,7 @@ export default function CreateInterview() {
     difficulty: 'Intermediate',
     mode: 'AI', // 'AI' | 'Custom'
     numQuestions: 5,
+    is_offline_mode: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +31,7 @@ export default function CreateInterview() {
           technology: formData.technology,
           difficulty: formData.difficulty,
           mode: formData.mode,
+          is_offline_mode: formData.is_offline_mode,
         })
         .select()
         .single();
@@ -65,8 +67,9 @@ export default function CreateInterview() {
         router.push('/admin');
       }
     } catch (err: any) {
-      console.error(err);
-      showToast('Error creating interview: ' + err.message, 'error');
+      console.error('Full Error Object:', err);
+      const errorMessage = err.message || err.details || 'Unknown error occurred';
+      showToast('Error creating interview: ' + errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -150,6 +153,21 @@ export default function CreateInterview() {
               />
             </div>
           )}
+
+          <div className="card" style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', margin: 0 }}>
+              <input 
+                type="checkbox" 
+                checked={formData.is_offline_mode}
+                onChange={(e) => setFormData({...formData, is_offline_mode: e.target.checked})}
+                style={{ width: 'auto' }}
+              />
+              <div>
+                <strong style={{ display: 'block' }}>Enable Offline Mode</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Students must disconnect from the internet to take this interview. Data is pre-fetched and synced later.</span>
+              </div>
+            </label>
+          </div>
 
           <div style={{ marginTop: '1rem' }}>
             <button type="submit" disabled={loading} style={{ width: '100%' }}>
