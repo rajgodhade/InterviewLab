@@ -198,12 +198,12 @@ export default function StudentDashboard() {
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
                         <span style={{ 
-                          background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-                          color: isCompleted ? 'var(--success)' : 'var(--accent-color)',
+                          background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                          color: isCompleted ? 'var(--success)' : assignment.interviews?.is_archived ? '#f59e0b' : 'var(--accent-color)',
                           padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
-                          border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                          border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
                         }}>
-                          {assignment.status}
+                          {isCompleted ? assignment.status : (assignment.interviews?.is_archived ? 'archived' : assignment.status)}
                         </span>
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
@@ -227,9 +227,13 @@ export default function StudentDashboard() {
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                         {assignment.status === 'pending' ? (
-                          <Link href={`/interview/${assignment.id}`}>
-                            <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
-                          </Link>
+                          assignment.interviews?.is_archived ? (
+                            <button disabled style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}>Archived</button>
+                          ) : (
+                            <Link href={`/interview/${assignment.id}`}>
+                              <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
+                            </Link>
+                          )
                         ) : (
                           <Link href={`/student/results/${assignment.id}`}>
                             <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>View Results</button>

@@ -22,13 +22,7 @@ export default function AssignInterview() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
   const [showStudentList, setShowStudentList] = useState(false);
-  const [showNewStudentForm, setShowNewStudentForm] = useState(false);
 
-  // New Student Form
-  const [newStudentData, setNewStudentData] = useState({
-    name: '',
-    email: ''
-  });
 
   // Shared Schedule Data
   const [scheduleData, setScheduleData] = useState({
@@ -71,42 +65,6 @@ export default function AssignInterview() {
     e.preventDefault();
     
     let finalStudentIds = [...selectedStudentIds];
-
-    // Handle new student if form is shown and filled
-    if (showNewStudentForm && newStudentData.email) {
-      setLoading(true);
-      try {
-        const { data: existingStudent } = await supabase
-          .from('students')
-          .select('id, is_archived')
-          .eq('email', newStudentData.email)
-          .single();
-
-        if (existingStudent?.is_archived) {
-          showToast(`Student with email ${newStudentData.email} is archived.`, 'error');
-          setLoading(false);
-          return;
-        }
-
-        if (existingStudent) {
-          if (!finalStudentIds.includes(existingStudent.id)) {
-            finalStudentIds.push(existingStudent.id);
-          }
-        } else {
-          const { data: newStudent, error: createError } = await supabase
-            .from('students')
-            .insert({ name: newStudentData.name, email: newStudentData.email })
-            .select()
-            .single();
-          if (createError) throw createError;
-          finalStudentIds.push(newStudent.id);
-        }
-      } catch (err: any) {
-        showToast('Error creating student: ' + err.message, 'error');
-        setLoading(false);
-        return;
-      }
-    }
 
     if (finalStudentIds.length === 0) {
       showToast('Please select at least one student or add a new one.', 'warning');
@@ -208,6 +166,13 @@ export default function AssignInterview() {
 
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          cursor: pointer;
+        }
+      `}} />
       <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ marginBottom: '0.5rem' }}>Assign Interview</h2>
@@ -249,7 +214,7 @@ export default function AssignInterview() {
                   </div>
                   
                   <div style={{ position: 'relative', marginBottom: '1rem' }}>
-                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#fff', opacity: 0.8 }}>🔍</span>
                     <input 
                       type="text" 
                       placeholder="Search students by name or email..." 
@@ -259,6 +224,44 @@ export default function AssignInterview() {
                       style={{ paddingLeft: '2.75rem' }}
                     />
                   </div>
+
+                  {/* Selected Students Chips */}
+                  {selectedStudentIds.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                      {selectedStudentIds.map(id => {
+                        const student = registeredStudents.find(s => s.id === id);
+                        if (!student) return null;
+                        return (
+                          <div 
+                            key={id} 
+                            style={{ 
+                              background: 'rgba(59, 130, 246, 0.2)', 
+                              color: '#60a5fa', 
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              padding: '0.35rem 0.75rem', 
+                              borderRadius: '20px', 
+                              fontSize: '0.8rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              animation: 'fadeIn 0.2s ease'
+                            }}
+                          >
+                            {student.name}
+                            <span 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudentIds(prev => prev.filter(sid => sid !== id));
+                              }}
+                              style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '0.7rem' }}
+                            >
+                              ✕
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {showStudentList && (
                     <div style={{ 
@@ -309,45 +312,10 @@ export default function AssignInterview() {
                               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{student.email}</div>
                             </div>
                           </div>
-                        ))
-                      )}
+                        )))
+                      }
                     </div>
                   )}
-                </div>
-
-                {/* OR Divider */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
-                  <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>OR</span>
-                  <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-                </div>
-
-                {/* Add New Student Form (Always Visible) */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-color)' }}>
-                    Add a New Student
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Name</label>
-                      <input 
-                        placeholder="Full Name" 
-                        value={newStudentData.name} 
-                        onChange={(e) => setNewStudentData({...newStudentData, name: e.target.value})} 
-                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Email</label>
-                      <input 
-                        type="email" 
-                        placeholder="Email Address" 
-                        value={newStudentData.email} 
-                        onChange={(e) => setNewStudentData({...newStudentData, email: e.target.value})} 
-                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : (
@@ -374,7 +342,7 @@ export default function AssignInterview() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Duration (minutes)</label>
-                <input required type="number" min="10" max="180" value={scheduleData.duration} onChange={(e) => setScheduleData({...scheduleData, duration: parseInt(e.target.value)})} />
+                <input required type="number" min="5" max="180" value={scheduleData.duration} onChange={(e) => setScheduleData({...scheduleData, duration: parseInt(e.target.value)})} />
               </div>
             </div>
 

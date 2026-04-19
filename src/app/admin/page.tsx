@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   useEffect(() => {
     fetchData();
@@ -103,9 +104,9 @@ export default function AdminDashboard() {
 
   const handleDelete = async (interviewId: string, title: string) => {
     const confirmed = await showConfirm({
-      title: 'Delete Interview',
-      message: `Are you sure you want to delete "${title}"? This will also delete all questions, assignments, and responses linked to this interview.`,
-      confirmText: 'Delete',
+      title: 'Permanently Delete Interview',
+      message: `Are you sure you want to permanently delete "${title}"? This action cannot be undone and will remove all associated data.`,
+      confirmText: 'Delete Permanently',
       danger: true,
     });
     if (!confirmed) return;
@@ -114,18 +115,61 @@ export default function AdminDashboard() {
       const { error } = await supabase.from('interviews').delete().eq('id', interviewId);
       if (error) throw error;
       setInterviews((prev) => prev.filter((i) => i.id !== interviewId));
-      showToast('Interview deleted successfully', 'success');
+      showToast('Interview deleted permanently', 'success');
     } catch (err: any) {
       console.error(err);
       showToast('Failed to delete interview: ' + err.message, 'error');
     }
   };
 
+  const handleArchive = async (interviewId: string, title: string) => {
+    const confirmed = await showConfirm({
+      title: 'Archive Interview',
+      message: `Are you sure you want to archive "${title}"? It will be moved to the archive and hidden from students starting new attempts, but history will be preserved.`,
+      confirmText: 'Archive',
+      danger: false,
+    });
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ is_archived: true })
+        .eq('id', interviewId);
+      
+      if (error) throw error;
+      
+      setInterviews((prev) => prev.map(i => i.id === interviewId ? { ...i, is_archived: true } : i));
+      showToast('Interview archived successfully', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Failed to archive interview: ' + err.message, 'error');
+    }
+  };
+
+  const handleRestore = async (interviewId: string) => {
+    try {
+      const { error } = await supabase
+        .from('interviews')
+        .update({ is_archived: false })
+        .eq('id', interviewId);
+      
+      if (error) throw error;
+      
+      setInterviews((prev) => prev.map(i => i.id === interviewId ? { ...i, is_archived: false } : i));
+      showToast('Interview restored successfully', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Failed to restore interview: ' + err.message, 'error');
+    }
+  };
+
   const filteredInterviews = interviews.filter(i => {
+    const matchesTab = activeTab === 'active' ? !i.is_archived : i.is_archived;
     const matchesSearch = i.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           i.technology.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDifficulty = filterDifficulty === 'All' || i.difficulty === filterDifficulty;
-    return matchesSearch && matchesDifficulty;
+    return matchesTab && matchesSearch && matchesDifficulty;
   });
 
   if (loading) return <div className="container"><p>Loading interviews...</p></div>;
@@ -179,8 +223,31 @@ export default function AdminDashboard() {
       <div className="flex-responsive" style={{ marginBottom: '1.5rem', alignItems: 'flex-end' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div>
-            <h3 style={{ margin: 0 }}>All Interviews</h3>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {filteredInterviews.length} sessions</div>
+            <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
+              <button 
+                onClick={() => setActiveTab('active')}
+                style={{ 
+                  background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer',
+                  color: activeTab === 'active' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  borderBottom: activeTab === 'active' ? '2px solid var(--accent-color)' : 'none',
+                  fontWeight: 700, fontSize: '1.1rem', transition: 'all 0.2s'
+                }}
+              >
+                Active
+              </button>
+              <button 
+                onClick={() => setActiveTab('archived')}
+                style={{ 
+                  background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer',
+                  color: activeTab === 'archived' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  borderBottom: activeTab === 'archived' ? '2px solid var(--accent-color)' : 'none',
+                  fontWeight: 700, fontSize: '1.1rem', transition: 'all 0.2s'
+                }}
+              >
+                Archived
+              </button>
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {filteredInterviews.length} {activeTab} sessions</div>
           </div>
           
           <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginLeft: '1rem' }}>
@@ -275,18 +342,32 @@ export default function AdminDashboard() {
                   e.currentTarget.style.borderColor = 'var(--glass-border)';
                 }}
               >
-                {/* Delete button in top-right corner */}
-                <button
-                  onClick={() => handleDelete(interview.id, interview.title)}
-                  title="Delete interview"
-                  style={{
-                    position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(244, 63, 94, 0.1)',
-                    color: 'var(--danger)', padding: '0.4rem', fontSize: '0.9rem',
-                    lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(244, 63, 94, 0.2)'
-                  }}
-                >
-                  ✕
-                </button>
+                {/* Archive/Delete button in top-right corner */}
+                {activeTab === 'active' ? (
+                  <button
+                    onClick={() => handleArchive(interview.id, interview.title)}
+                    title="Archive interview"
+                    style={{
+                      position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#f59e0b', padding: '0.4rem', fontSize: '0.9rem',
+                      lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(245, 158, 11, 0.2)'
+                    }}
+                  >
+                    📥
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleDelete(interview.id, interview.title)}
+                    title="Delete permanently"
+                    style={{
+                      position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(244, 63, 94, 0.1)',
+                      color: 'var(--danger)', padding: '0.4rem', fontSize: '0.9rem',
+                      lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(244, 63, 94, 0.2)'
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
 
                 <div>
                   <h3 style={{ marginBottom: '0.75rem', paddingRight: '2.5rem', fontSize: '1.4rem', lineHeight: '1.2', fontWeight: 800 }}>{interview.title}</h3>
@@ -346,6 +427,17 @@ export default function AdminDashboard() {
                   <Link href={`/admin/results/${interview.id}`}>
                     <button style={{ width: '100%', background: 'var(--accent-gradient)', color: '#fff', fontSize: '0.85rem', padding: '0.75rem', fontWeight: 700, border: 'none' }}>View Results</button>
                   </Link>
+                  {activeTab === 'archived' && (
+                    <button 
+                      onClick={() => handleRestore(interview.id)}
+                      style={{ 
+                        gridColumn: 'span 2', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', 
+                        border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.75rem', fontWeight: 700 
+                      }}
+                    >
+                      Restore Interview
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -395,12 +487,32 @@ export default function AdminDashboard() {
                   <Link href={`/admin/results/${interview.id}`}>
                     <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Results</button>
                   </Link>
-                  <button 
-                    onClick={() => handleDelete(interview.id, interview.title)}
-                    style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)', opacity: 0.6 }}
-                  >
-                    ✕
-                  </button>
+                  {activeTab === 'active' ? (
+                    <button 
+                      onClick={() => handleArchive(interview.id, interview.title)}
+                      title="Archive"
+                      style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', color: '#f59e0b', border: '1px solid #f59e0b', opacity: 0.8 }}
+                    >
+                      📥
+                    </button>
+                  ) : (
+                    <>
+                      <button 
+                        onClick={() => handleRestore(interview.id)}
+                        title="Restore"
+                        style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', color: 'var(--success)', border: '1px solid var(--success)', opacity: 0.8 }}
+                      >
+                        ↺
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(interview.id, interview.title)}
+                        title="Delete Permanently"
+                        style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)', opacity: 0.6 }}
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )

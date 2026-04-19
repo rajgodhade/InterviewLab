@@ -7,8 +7,12 @@ CREATE TABLE interviews (
   technology TEXT NOT NULL,
   mode TEXT NOT NULL CHECK (mode IN ('AI', 'Custom')),
   difficulty TEXT NOT NULL CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
+  is_archived BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Run this to add is_archived to an existing interviews table:
+-- ALTER TABLE interviews ADD COLUMN is_archived BOOLEAN DEFAULT false;
 
 -- 2. Create Questions Table
 CREATE TABLE questions (
