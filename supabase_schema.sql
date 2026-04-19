@@ -53,6 +53,8 @@ CREATE TABLE interview_assignments (
 -- ALTER TABLE interview_assignments ADD COLUMN last_seen_at TIMESTAMP WITH TIME ZONE;
 -- ALTER TABLE interview_assignments ADD COLUMN submitted_at TIMESTAMP WITH TIME ZONE;
 -- ALTER TABLE interview_assignments ADD COLUMN started_at TIMESTAMP WITH TIME ZONE;
+-- ALTER TABLE interview_assignments ADD COLUMN final_score INTEGER;
+-- ALTER TABLE interview_assignments ADD COLUMN max_score INTEGER;
 
 -- 5. Create Responses Table
 CREATE TABLE responses (
@@ -96,4 +98,12 @@ CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = '
 CREATE POLICY "Public Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars');
 CREATE POLICY "Public Update" ON storage.objects FOR UPDATE WITH CHECK (bucket_id = 'avatars');
 CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = 'avatars');
+
+-- 10. Create App Settings Table
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL
+);
+
+ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;
 

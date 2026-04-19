@@ -113,6 +113,19 @@ export default function InterviewSession() {
     finally { setLoading(false); }
   };
 
+  // HEARTBEAT LOGIC: Update last_seen_at every 30 seconds
+  useEffect(() => {
+    if (loading || submitted || !assignmentId) return;
+
+    const interval = setInterval(async () => {
+      await supabase.from('interview_assignments')
+        .update({ last_seen_at: new Date().toISOString(), is_live: true })
+        .eq('id', assignmentId);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [loading, submitted, assignmentId]);
+
   const setAnswer = (val: string) => {
     const newAnswers = { ...answers, [questions[currentQuestionIndex].id]: val };
     setAnswers(newAnswers);
@@ -142,6 +155,17 @@ export default function InterviewSession() {
 
     setSubmitted(true);
     try {
+      // Calculate score
+      let finalScore = 0;
+      questions.forEach(q => {
+        const studentAns = (answers[q.id] || '').trim().toLowerCase();
+        const expectedAns = (q.expected_answer || '').trim().toLowerCase();
+        // Exact match for MCQ/Short Answer. Long answers won't auto-score perfectly but this is a base.
+        if (studentAns === expectedAns && expectedAns !== '') {
+          finalScore++;
+        }
+      });
+
       const responsesToInsert = questions.map(q => ({
         assignment_id: assignmentId,
         question_id: q.id,
@@ -156,7 +180,9 @@ export default function InterviewSession() {
       await supabase.from('interview_assignments').update({ 
         status: 'completed', 
         is_live: false,
-        submitted_at: new Date().toISOString()
+        submitted_at: new Date().toISOString(),
+        final_score: finalScore,
+        max_score: questions.length
       }).eq('id', assignmentId);
 
       // Clear local storage on successful submission
