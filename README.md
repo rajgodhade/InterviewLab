@@ -1,14 +1,18 @@
 # InterviewLab
 
-InterviewLab is a comprehensive simulation platform designed for both students and administrators to manage and conduct mock interviews. It features an AI-powered question generator, real-time interview monitoring, and a robust question bank covering various technologies.
+InterviewLab is a premium simulation platform designed for both students and administrators to manage and conduct mock interviews. It features an AI-powered question generator, a resilient offline-first interview engine, and a comprehensive study material management system.
+
+---
 
 ## Features
 
 - **Student Portal**: Take mock interviews in real-time with persistent timers and browser-exit protection.
-- **Admin Dashboard**: Manage students, interview groups, and monitor interview progress.
-- **AI Question Bank**: Thousands of questions across 20+ technologies including HTML, CSS, JavaScript, React, Node.js, Python, and more.
-- **Integrity Checks**: Built-in mechanisms to ensure interview fairness.
-- **Analytics**: Detailed performance metrics for students and overall group statistics.
+- **Admin Dashboard**: Manage students, batches, and monitor interview progress in real-time.
+- **Study Material Module**: Centralized hub for students to access curated learning resources (videos, docs) assigned by instructors.
+- **Offline Mode**: Resilient interview engine with local caching and auto-sync for unstable connections.
+- **AI Question Bank**: Dynamically generated and static questions across 20+ technologies including HTML, CSS, JavaScript, React, and more.
+- **In-App Inbox**: Integrated notification system for assignments and feedback.
+- **Analytics & Leaderboards**: Detailed performance metrics and competitive ranking for students and batches.
 
 ## Tech Stack
 
@@ -50,7 +54,11 @@ InterviewLab is a comprehensive simulation platform designed for both students a
 
 ## Database Schema
 
-The database schema is provided in `supabase_schema.sql`. You can run this in your Supabase SQL editor to set up the necessary tables.
+The database schema is provided in two parts:
+- `supabase_schema.sql`: Core tables for students, interviews, and batches.
+- `supabase_study_material.sql`: Tables for the study material module.
+
+You can run these in your Supabase SQL editor to set up the environment.
 
 ## License
 
