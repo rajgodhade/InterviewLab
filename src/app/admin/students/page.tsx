@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { useUI } from '@/components/UIProvider';
 import { useRef } from 'react';
 
 export default function StudentProfileList() {
+  const supabase = createClient();
   const { showToast, showConfirm } = useUI();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,15 @@ export default function StudentProfileList() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchStudents();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+      fetchStudents();
+    };
+    checkAuth();
   }, []);
 
   const fetchStudents = async () => {
@@ -273,8 +282,19 @@ export default function StudentProfileList() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '300px' }}>
+      <div className="toolbar" style={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        gap: '1rem', 
+        marginBottom: '2.5rem',
+        background: 'var(--glass-bg)',
+        padding: '1rem 1.5rem',
+        borderRadius: '16px',
+        border: '1px solid var(--border-color)',
+        backdropFilter: 'blur(10px)',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ position: 'relative', flex: '1 1 300px' }}>
           <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>🔍</span>
           <input 
             type="text" 
@@ -285,39 +305,50 @@ export default function StudentProfileList() {
           />
         </div>
         
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button 
-            onClick={() => setViewMode('grid')}
+            onClick={() => setShowArchived(!showArchived)}
             style={{ 
-              background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent', 
-              padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none'
+              background: showArchived ? 'var(--accent-gradient)' : 'var(--bg-accent)', 
+              color: 'var(--text-primary)', border: '1px solid var(--border-color)',
+              fontSize: '0.85rem', padding: '0.6rem 1.25rem', minWidth: '160px',
+              borderRadius: '10px'
             }}
-            title="Grid View"
           >
-            🔲
+            {showArchived ? '📦 Showing Archived' : '📁 View Archived'}
           </button>
-          <button 
-            onClick={() => setViewMode('list')}
-            style={{ 
-              background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent', 
-              padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none'
-            }}
-            title="List View"
-          >
-            ≡
-          </button>
-        </div>
 
-        <button 
-          onClick={() => setShowArchived(!showArchived)}
-          style={{ 
-            background: showArchived ? 'var(--accent-gradient)' : 'var(--bg-accent)', 
-            color: 'var(--text-primary)', border: '1px solid var(--border-color)',
-            fontSize: '0.85rem', padding: '0.75rem 1.25rem', minWidth: '160px'
-          }}
-        >
-          {showArchived ? '📦 Showing Archived' : '📁 View Archived'}
-        </button>
+          <div style={{ display: 'flex', background: 'var(--bg-accent)', padding: '0.2rem', borderRadius: '8px', gap: '0.2rem', marginLeft: '0.5rem', border: '1px solid var(--border-color)' }}>
+            <button 
+              onClick={() => setViewMode('grid')}
+              style={{ 
+                padding: '0.4rem 0.8rem', 
+                background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent',
+                color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Grid
+            </button>
+            <button 
+              onClick={() => setViewMode('list')}
+              style={{ 
+                padding: '0.4rem 0.8rem', 
+                background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent',
+                color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              List
+            </button>
+          </div>
+        </div>
       </div>
 
       {isSelectionMode && (

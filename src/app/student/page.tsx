@@ -9,7 +9,6 @@ export default function StudentLogin() {
   const router = useRouter();
   const { showToast } = useUI();
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export default function StudentLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !name) return;
+    if (!email) return;
 
     setLoading(true);
     try {
@@ -43,9 +42,9 @@ export default function StudentLogin() {
 
       // Store in localStorage for session
       localStorage.setItem('student_email', email.trim().toLowerCase());
-      localStorage.setItem('student_name', data.name || name); // Use database name if available
+      localStorage.setItem('student_name', data.name || 'Student'); 
       
-      showToast(`Welcome back, ${data.name || name}!`, 'success');
+      showToast(`Welcome back, ${data.name || 'Student'}!`, 'success');
       router.push('/student/dashboard');
     } catch (err: any) {
       console.error(err);
@@ -61,22 +60,14 @@ export default function StudentLogin() {
         <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Student Portal</h2>
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Full Name</label>
-            <input 
-              required
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Email Address</label>
             <input 
               required
               type="email"
-              placeholder="Enter your email"
+              placeholder="Enter your registered email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%' }}
             />
           </div>
           <button type="submit" disabled={loading} style={{ marginTop: '1rem', background: loading ? 'var(--bg-accent)' : 'var(--accent-color)' }}>

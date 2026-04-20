@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/UIProvider';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const supabase = createClient();
   const { showToast, showConfirm } = useUI();
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +24,16 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   useEffect(() => {
-    fetchData();
-    fetchViewMode();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+      fetchData();
+      fetchViewMode();
+    };
+    checkAuth();
   }, []);
 
   const fetchViewMode = async () => {
@@ -164,6 +175,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    const confirmed = await showConfirm({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
   const filteredInterviews = interviews.filter(i => {
     const matchesTab = activeTab === 'active' ? !i.is_archived : i.is_archived;
     const matchesSearch = i.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -176,11 +201,24 @@ export default function AdminDashboard() {
 
   return (
     <div className="container">
-      <div className="flex-responsive" style={{ marginBottom: '2.5rem' }}>
+      <div className="flex-responsive" style={{ marginBottom: '2.5rem', justifyContent: 'space-between' }}>
         <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
-        <Link href="/admin/create">
-          <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>+ Create Interview</button>
-        </Link>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              background: 'rgba(244, 63, 94, 0.1)', 
+              color: 'var(--danger)', 
+              border: '1px solid rgba(244, 63, 94, 0.2)',
+              padding: '0.5rem 1rem'
+            }}
+          >
+            Logout
+          </button>
+          <Link href="/admin/create">
+            <button style={{ background: 'var(--accent-gradient)' }}>+ Create Interview</button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Overview Grid */}
@@ -220,83 +258,100 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex-responsive" style={{ marginBottom: '1.5rem', alignItems: 'flex-end' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div>
-            <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
-              <button 
-                onClick={() => setActiveTab('active')}
-                style={{ 
-                  background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer',
-                  color: activeTab === 'active' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                  borderBottom: activeTab === 'active' ? '2px solid var(--accent-color)' : 'none',
-                  fontWeight: 700, fontSize: '1.1rem', transition: 'all 0.2s'
-                }}
-              >
-                Active
-              </button>
-              <button 
-                onClick={() => setActiveTab('archived')}
-                style={{ 
-                  background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer',
-                  color: activeTab === 'archived' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                  borderBottom: activeTab === 'archived' ? '2px solid var(--accent-color)' : 'none',
-                  fontWeight: 700, fontSize: '1.1rem', transition: 'all 0.2s'
-                }}
-              >
-                Archived
-              </button>
-            </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {filteredInterviews.length} {activeTab} sessions</div>
-          </div>
-          
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginLeft: '1rem' }}>
-            <button 
-              onClick={() => updateViewMode('grid')}
-              style={{ 
-                padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '8px',
-                background: viewMode === 'grid' ? 'var(--bg-accent)' : 'transparent',
-                color: viewMode === 'grid' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
-              }}
-            >
-              ⊞ Grid
-            </button>
-            <button 
-              onClick={() => updateViewMode('list')}
-              style={{ 
-                padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '8px',
-                background: viewMode === 'list' ? 'var(--bg-accent)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'list' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
-              }}
-            >
-              ≡ List
-            </button>
-          </div>
+      <div style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+          <button 
+            onClick={() => setActiveTab('active')}
+            style={{ 
+              background: 'none', border: 'none', padding: '0.75rem 0.5rem', cursor: 'pointer',
+              color: activeTab === 'active' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              borderBottom: activeTab === 'active' ? '2px solid var(--accent-color)' : '2px solid transparent',
+              fontWeight: 700, fontSize: '1.05rem', transition: 'all 0.2s',
+              marginBottom: '-1px'
+            }}
+          >
+            Active Interviews
+          </button>
+          <button 
+            onClick={() => setActiveTab('archived')}
+            style={{ 
+              background: 'none', border: 'none', padding: '0.75rem 0.5rem', cursor: 'pointer',
+              color: activeTab === 'archived' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              borderBottom: activeTab === 'archived' ? '2px solid var(--accent-color)' : '2px solid transparent',
+              fontWeight: 700, fontSize: '1.05rem', transition: 'all 0.2s',
+              marginBottom: '-1px'
+            }}
+          >
+            Archived
+          </button>
         </div>
-        
-        <div style={{ display: 'flex', gap: '1rem', flex: 1, maxWidth: '600px', justifyContent: 'flex-end' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+
+        {/* Toolbar */}
+        <div className="toolbar" style={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          gap: '1rem', 
+          background: 'var(--glass-bg)',
+          padding: '1rem 1.5rem',
+          borderRadius: '16px',
+          border: '1px solid var(--border-color)',
+          backdropFilter: 'blur(10px)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ position: 'relative', flex: '1 1 300px' }}>
             <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>🔍</span>
             <input 
               type="text" 
-              placeholder="Search by title or tech..." 
+              placeholder="Search by title or technology..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '2.75rem', fontSize: '0.9rem' }}
+              style={{ paddingLeft: '2.75rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', width: '100%' }}
             />
           </div>
-          <select 
-            value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            style={{ width: 'auto', minWidth: '150px', fontSize: '0.9rem' }}
-          >
-            <option value="All">All Difficulty</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
+          
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <select 
+              value={filterDifficulty}
+              onChange={(e) => setFilterDifficulty(e.target.value)}
+              style={{ width: 'auto', minWidth: '150px', fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+            >
+              <option value="All">All Difficulty</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+
+            <div style={{ display: 'flex', background: 'var(--bg-accent)', padding: '0.2rem', borderRadius: '8px', gap: '0.2rem', marginLeft: '0.5rem', border: '1px solid var(--border-color)' }}>
+              <button 
+                onClick={() => updateViewMode('grid')}
+                style={{ 
+                  padding: '0.4rem 0.8rem', 
+                  background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent',
+                  color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
+                  fontSize: '0.8rem',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Grid
+              </button>
+              <button 
+                onClick={() => updateViewMode('list')}
+                style={{ 
+                  padding: '0.4rem 0.8rem', 
+                  background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent',
+                  color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)',
+                  fontSize: '0.8rem',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                List
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
