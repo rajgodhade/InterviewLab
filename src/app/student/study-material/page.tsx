@@ -167,10 +167,16 @@ export default function StudentStudyMaterial() {
         
         const uniqueMaterialsMap = new Map();
         assignments?.forEach(a => {
-          if (a.study_materials && !uniqueMaterialsMap.has(a.study_materials.id)) {
-            uniqueMaterialsMap.set(a.study_materials.id, {
-              ...a.study_materials,
-              assignment_id: a.id
+          const m = a.study_materials;
+          if (m) {
+            const materialsArr = Array.isArray(m) ? m : [m];
+            materialsArr.forEach((sm: any) => {
+              if (sm && !uniqueMaterialsMap.has(sm.id)) {
+                uniqueMaterialsMap.set(sm.id, {
+                  ...sm,
+                  assignment_id: a.id
+                });
+              }
             });
           }
         });
@@ -202,10 +208,16 @@ export default function StudentStudyMaterial() {
 
         // Add materials moved by the student (overriding or adding)
         movedAssignments?.forEach(a => {
-          if (a.study_materials) {
-            uniqueMaterialsMap.set(a.study_materials.id, {
-              ...a.study_materials,
-              assignment_id: a.id
+          const m = a.study_materials;
+          if (m) {
+            const materialsArr = Array.isArray(m) ? m : [m];
+            materialsArr.forEach((sm: any) => {
+              if (sm && !uniqueMaterialsMap.has(sm.id)) {
+                uniqueMaterialsMap.set(sm.id, {
+                  ...sm,
+                  assignment_id: a.id
+                });
+              }
             });
           }
         });
