@@ -35,8 +35,14 @@ export default function ManageBatch() {
         .select('id, students(*)')
         .eq('group_id', batchId);
       if (mError) throw mError;
+      // Process members to flatten students join (Supabase sometimes returns an array for joins)
+      const processedMembers = (mData || []).map(m => {
+        const student = Array.isArray(m.students) ? m.students[0] : m.students;
+        return { ...m, students: student };
+      });
+
       // Filter out archived students from the member list
-      const activeMembers = (mData || []).filter(m => m.students && !m.students.is_archived);
+      const activeMembers = processedMembers.filter(m => m.students && !m.students.is_archived);
       setMembers(activeMembers);
     } catch (err: any) {
       console.error(err);
