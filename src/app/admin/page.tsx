@@ -23,6 +23,14 @@ export default function AdminDashboard() {
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Close menu when clicking anywhere else
+    const handleClickOutside = () => setActiveMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     // Realtime subscription for interview assignments to track live room status
@@ -330,33 +338,35 @@ export default function AdminDashboard() {
         </div>
 
         {/* Toolbar */}
-        <div className="toolbar" style={{ 
+        <div style={{ 
           display: 'flex', 
           alignItems: 'center',
-          gap: '1rem', 
+          gap: '1.5rem', 
           background: 'var(--glass-bg)',
-          padding: '1rem 1.5rem',
-          borderRadius: '16px',
-          border: '1px solid var(--border-color)',
-          backdropFilter: 'blur(10px)',
-          flexWrap: 'wrap'
+          padding: '0.75rem 1.25rem',
+          borderRadius: '20px',
+          border: '1px solid var(--glass-border)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: 'var(--shadow-premium)',
+          flexWrap: 'wrap',
+          marginBottom: '2rem'
         }}>
-          <div style={{ position: 'relative', flex: '1 1 300px' }}>
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>🔍</span>
+          <div style={{ position: 'relative', flex: '1 1 200px' }}>
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
             <input 
               type="text" 
-              placeholder="Search by title or technology..." 
+              placeholder="Search interviews..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '2.75rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', width: '100%' }}
+              style={{ paddingLeft: '2.5rem', height: '42px', borderRadius: '12px', border: 'none', background: 'rgba(0,0,0,0.2)', width: '100%', fontSize: '0.9rem' }}
             />
           </div>
           
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <select 
               value={filterDifficulty}
               onChange={(e) => setFilterDifficulty(e.target.value)}
-              style={{ width: 'auto', minWidth: '150px', fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+              style={{ width: 'auto', height: '42px', minWidth: '140px', fontSize: '0.85rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)' }}
             >
               <option value="All">All Difficulty</option>
               <option value="Beginner">Beginner</option>
@@ -364,34 +374,30 @@ export default function AdminDashboard() {
               <option value="Advanced">Advanced</option>
             </select>
 
-            <div style={{ display: 'flex', background: 'var(--bg-accent)', padding: '0.2rem', borderRadius: '8px', gap: '0.2rem', marginLeft: '0.5rem', border: '1px solid var(--border-color)' }}>
+            <div style={{ height: '24px', width: '1px', background: 'var(--border-color)' }}></div>
+
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '0.25rem', borderRadius: '10px', gap: '0.25rem' }}>
               <button 
                 onClick={() => updateViewMode('grid')}
                 style={{ 
-                  padding: '0.4rem 0.8rem', 
-                  background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent',
+                  width: '36px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: viewMode === 'grid' ? 'var(--accent-color)' : 'transparent',
                   color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
-                  fontSize: '0.8rem',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
+                  border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.2s'
                 }}
               >
-                Grid
+                ⊞
               </button>
               <button 
                 onClick={() => updateViewMode('list')}
                 style={{ 
-                  padding: '0.4rem 0.8rem', 
-                  background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent',
+                  width: '36px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: viewMode === 'list' ? 'var(--accent-color)' : 'transparent',
                   color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)',
-                  fontSize: '0.8rem',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
+                  border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.2s'
                 }}
               >
-                List
+                ≡
               </button>
             </div>
           </div>
@@ -420,156 +426,179 @@ export default function AdminDashboard() {
                 style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: '1.25rem', 
+                  gap: '1.5rem', 
                   position: 'relative', 
-                  padding: '1.75rem',
+                  padding: '2rem',
                   background: 'var(--glass-bg)',
-                  backdropFilter: 'blur(10px)',
+                  backdropFilter: 'blur(15px)',
                   border: '1px solid var(--glass-border)',
                   boxShadow: 'var(--shadow-premium)',
-                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 onMouseEnter={(e) => {
-                  if (window.innerWidth > 768) {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                  }
+                  e.currentTarget.style.transform = 'translateY(-6px) scale(1.01)';
+                  e.currentTarget.style.borderColor = 'var(--accent-color)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(0,0,0,0.5), 0 0 20px rgba(59, 130, 246, 0.1)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
                   e.currentTarget.style.borderColor = 'var(--glass-border)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-premium)';
                 }}
               >
-                {/* Archive/Delete button in top-right corner */}
-                {activeTab === 'active' ? (
-                  <button
-                    onClick={() => handleArchive(interview.id, interview.title)}
-                    title="Archive interview"
-                    style={{
-                      position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(245, 158, 11, 0.1)',
-                      color: '#f59e0b', padding: '0.4rem', fontSize: '0.9rem',
-                      lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(245, 158, 11, 0.2)'
+                {/* Three Dot Menu */}
+                <div 
+                  style={{ position: 'absolute', top: '1.5rem', right: '1rem', zIndex: 20 }}
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+                >
+                  <button 
+                    onClick={() => setActiveMenu(activeMenu === interview.id ? null : interview.id)}
+                    style={{ 
+                      background: 'none', border: 'none', color: 'var(--text-secondary)', 
+                      cursor: 'pointer', fontSize: '1.5rem', padding: '0.5rem', lineHeight: 0,
+                      transition: '0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                   >
-                    📥
+                    ⋮
                   </button>
-                ) : (
-                  <button
-                    onClick={() => handleDelete(interview.id, interview.title)}
-                    title="Delete permanently"
-                    style={{
-                      position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(244, 63, 94, 0.1)',
-                      color: 'var(--danger)', padding: '0.4rem', fontSize: '0.9rem',
-                      lineHeight: 1, borderRadius: '8px', transition: 'all 0.2s ease', border: '1px solid rgba(244, 63, 94, 0.2)'
-                    }}
-                  >
-                    ✕
-                  </button>
-                )}
-
-                <div>
-                  <h3 style={{ marginBottom: '0.75rem', paddingRight: '2.5rem', fontSize: '1.4rem', lineHeight: '1.2', fontWeight: 800 }}>{interview.title}</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', gap: '2px' }}>
-                        {getTechIcons(interview.technology).map((icon, idx) => (
-                          <span key={idx} style={{ fontSize: '0.8rem' }}>{icon}</span>
-                        ))}
-                      </div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{interview.technology}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.8rem' }}>🎯</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{interview.difficulty}</span>
-                    </div>
-                    <span style={{ 
-                      background: interview.mode === 'AI' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)', 
-                      color: interview.mode === 'AI' ? '#a78bfa' : '#60a5fa', 
-                      padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(255,255,255,0.05)'
+                  
+                  {activeMenu === interview.id && (
+                    <div style={{ 
+                      position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem',
+                      background: 'rgba(23, 23, 23, 0.95)', backdropFilter: 'blur(10px)',
+                      border: '1px solid var(--glass-border)', borderRadius: '12px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '160px',
+                      overflow: 'hidden', animation: 'fadeIn 0.2s ease'
                     }}>
-                      {interview.mode}
-                    </span>
-                    {interview.is_offline_mode && (
-                      <span style={{ 
-                        background: 'rgba(239, 68, 68, 0.15)', 
-                        color: '#f87171', 
-                        padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(239, 68, 68, 0.2)'
-                      }}>
-                        Offline
-                      </span>
-                    )}
-                    {interview.interview_assignments?.some((a: any) => a.is_live) && (
-                      <span style={{ 
-                        background: 'rgba(16, 185, 129, 0.15)', 
-                        color: 'var(--success)', 
-                        padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(16, 185, 129, 0.2)',
-                        display: 'flex', alignItems: 'center', gap: '0.4rem'
-                      }}>
-                        <span style={{ width: '6px', height: '6px', background: 'var(--success)', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }}></span>
-                        Live Now
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Premium Stats Box */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)', marginTop: '0.25rem' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
-                      {interview.interview_assignments?.length || 0}
-                    </span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.4rem', fontWeight: 700 }}>
-                      Assigned
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)', lineHeight: 1 }}>
-                      {interview.interview_assignments?.filter((a: any) => a.status === 'completed').length || 0}
-                    </span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.4rem', fontWeight: 700 }}>
-                      Completed
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
-                  <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
-                    <button style={{ width: '100%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem', padding: '0.75rem', fontWeight: 600 }}>Manage Interview Details</button>
-                  </Link>
-                  <Link href={`/admin/live/${interview.id}`}>
-                    <button style={{ 
-                      width: '100%', 
-                      background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', 
-                      color: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
-                      border: interview.interview_assignments?.some((a: any) => a.is_live) ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(244, 63, 94, 0.2)', 
-                      fontSize: '0.85rem', padding: '0.75rem', fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
-                    }}>
-                      <span style={{ 
-                        width: '8px', 
-                        height: '8px', 
-                        background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
-                        borderRadius: '50%',
-                        animation: interview.interview_assignments?.some((a: any) => a.is_live) ? 'pulse-live 1.5s infinite' : 'none'
-                      }}></span>
-                      Monitor Session
-                    </button>
-                  </Link>
-                  <Link href={`/admin/results/${interview.id}`}>
-                    <button style={{ width: '100%', background: 'var(--accent-gradient)', color: '#fff', fontSize: '0.85rem', padding: '0.75rem', fontWeight: 700, border: 'none' }}>View Results</button>
-                  </Link>
-                  {activeTab === 'archived' && (
-                    <button 
-                      onClick={() => handleRestore(interview.id)}
-                      style={{ 
-                        gridColumn: 'span 2', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', 
-                        border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.75rem', fontWeight: 700 
-                      }}
-                    >
-                      Restore Interview
-                    </button>
+                      {activeTab === 'active' ? (
+                        <button 
+                          onClick={() => { handleArchive(interview.id, interview.title); setActiveMenu(null); }}
+                          style={{ width: '100%', padding: '0.75rem 1rem', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        >
+                          <span>📥</span> Archive
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => { handleRestore(interview.id); setActiveMenu(null); }}
+                            style={{ width: '100%', padding: '0.75rem 1rem', textAlign: 'left', background: 'none', border: 'none', color: 'var(--success)', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                            <span>↺</span> Restore
+                          </button>
+                          <button 
+                            onClick={() => { handleDelete(interview.id, interview.title); setActiveMenu(null); }}
+                            style={{ width: '100%', padding: '0.75rem 1rem', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                            <span>✕</span> Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                {/* Tech Accent Line */}
+                <div style={{ 
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
+                  background: interview.is_offline_mode ? 'var(--danger)' : 'var(--accent-gradient)',
+                  opacity: 0.6
+                }}></div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>{interview.title}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{getTechIcons(interview.technology)[0] || '💻'}</span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>{interview.technology}</span>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem', marginRight: '2rem' }}>
+                    {interview.is_offline_mode && (
+                      <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', fontSize: '0.65rem', fontWeight: 800, padding: '0.25rem 0.5rem', borderRadius: '6px', textTransform: 'uppercase' }}>Offline</span>
+                    )}
+                    <span style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 800, padding: '0.25rem 0.5rem', borderRadius: '6px', textTransform: 'uppercase' }}>{interview.difficulty}</span>
+                  </div>
+                </div>
+
+                {/* Metrics Visualization */}
+                <div style={{ 
+                  display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                  <div style={{ flex: 1, textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{interview.interview_assignments?.length || 0}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem' }}>Assigned</div>
+                  </div>
+                  <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                  <div style={{ flex: 1, textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--success)', lineHeight: 1 }}>
+                      {interview.interview_assignments?.filter((a: any) => a.status === 'completed').length || 0}
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem' }}>Completed</div>
+                  </div>
+                </div>
+
+                {/* Actions Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
+                    <button style={{ 
+                      width: '100%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', 
+                      border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.8rem', 
+                      fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      Manage Assignments
+                    </button>
+                  </Link>
+                  
+                  <Link href={`/admin/live/${interview.id}`}>
+                    <button style={{ 
+                      width: '100%', height: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
+                      background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)',
+                      color: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'var(--text-secondary)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: '0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)'; }}
+                    >
+                      <span style={{ 
+                        width: '8px', height: '8px', background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'currentColor', 
+                        borderRadius: '50%', animation: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'pulse-live 1.5s infinite' : 'none', opacity: 0.6
+                      }}></span>
+                      {interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length > 0 ? (
+                        <span>Monitor Live ({interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length})</span>
+                      ) : (
+                        <span>Live Monitor</span>
+                      )}
+                    </button>
+                  </Link>
+
+                  <Link href={`/admin/results/${interview.id}`}>
+                    <button style={{ 
+                      width: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
+                      background: 'var(--accent-gradient)', color: '#fff', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', transition: '0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.4)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'; }}
+                    >
+                      View Results
+                    </button>
+                  </Link>
+                </div>
+
               </div>
             ) : (
               /* LIST VIEW ITEM */

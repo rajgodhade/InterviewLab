@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
+import CodeEditor from '@/components/CodeEditor';
+import ProctoringSystem from '@/components/ProctoringSystem';
 
 export default function InterviewSession() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function InterviewSession() {
   const [submitted, setSubmitted] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSync, setPendingSync] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchInterviewData();
@@ -341,6 +344,100 @@ export default function InterviewSession() {
 
   const q = questions[currentQuestionIndex];
   const currentAnswer = answers[q.id] || '';
+
+  // Framework & Library Support Template
+  const getProcessedSrcDoc = (code: string) => {
+    const isReact = code.includes('React') || code.includes('JSX') || code.includes('export default') || code.includes('render(');
+    const isVue = code.includes('Vue') || code.includes('createApp') || code.includes('v-model') || code.includes('{{');
+    const isTailwind = code.includes('class=') || code.includes('className=');
+    const needsAutoRender = !code.includes('ReactDOM.render') && !code.includes('createRoot');
+
+    if (isReact) {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            ${isTailwind ? '<script src="https://cdn.tailwindcss.com"></script>' : ''}
+            <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+            <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+            <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+            <style>
+              body { margin: 0; padding: 1rem; font-family: sans-serif; background: #fff; }
+              #root { min-height: 100vh; }
+            </style>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="text/babel">
+              try {
+                ${code}
+                // Automatically render App if it exists and no manual render is present
+                if (typeof App !== 'undefined' && ${needsAutoRender}) {
+                  const root = ReactDOM.createRoot(document.getElementById('root'));
+                  root.render(React.createElement(App));
+                }
+              } catch (err) {
+                document.getElementById('root').innerHTML = '<pre style="color: red; padding: 1rem; white-space: pre-wrap;">' + err.message + '</pre>';
+              }
+            </script>
+          </body>
+        </html>
+      `;
+    }
+
+    if (isVue) {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            ${isTailwind ? '<script src="https://cdn.tailwindcss.com"></script>' : ''}
+            <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+            <style>
+              body { margin: 0; padding: 1rem; font-family: sans-serif; background: #fff; }
+              #app { min-height: 100vh; }
+            </style>
+          </head>
+          <body>
+            ${!code.includes('id="app"') ? '<div id="app"></div>' : ''}
+            <script>
+              try {
+                const { createApp, ref, reactive, onMounted, computed, watch } = Vue;
+                ${code}
+                // Automatically mount if App object is defined but not mounted
+                if (typeof App !== 'undefined' && !document.querySelector('#app').__vue_app__) {
+                  createApp(App).mount('#app');
+                }
+              } catch (err) {
+                const appDiv = document.getElementById('app');
+                if (appDiv) {
+                  appDiv.innerHTML = '<pre style="color: red; padding: 1rem; white-space: pre-wrap;">' + err.message + '</pre>';
+                } else {
+                  document.body.innerHTML = '<pre style="color: red; padding: 1rem; white-space: pre-wrap;">' + err.message + '</pre>';
+                }
+              }
+            </script>
+          </body>
+        </html>
+      `;
+    }
+
+    // Default HTML/JS Template with Tailwind support
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          ${isTailwind ? '<script src="https://cdn.tailwindcss.com"></script>' : ''}
+          <style>body { margin: 0; padding: 1rem; font-family: sans-serif; }</style>
+        </head>
+        <body>
+          ${code}
+        </body>
+      </html>
+    `;
+  };
+
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
   // Badge color for question type
@@ -349,6 +446,7 @@ export default function InterviewSession() {
     true_false: { label: 'True / False', color: '#f59e0b' },
     short_answer: { label: 'Short Answer', color: '#3b82f6' },
     long_answer: { label: 'Long Answer', color: '#10b981' },
+    coding: { label: 'Coding', color: '#6366f1' },
   };
   const badge = typeBadge[q.question_type] || typeBadge.short_answer;
 
@@ -496,10 +594,56 @@ export default function InterviewSession() {
         )}
 
         {/* Long Answer / Coding */}
-        {q.question_type === 'long_answer' && (
-          <textarea placeholder="Write your code or detailed answer here..."
-            value={currentAnswer} onChange={(e) => setAnswer(e.target.value)}
-            style={{ flex: 1, minHeight: '200px', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.95rem' }} />
+        {(q.question_type === 'long_answer' || q.question_type === 'coding') && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', minHeight: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Code Editor</span>
+                <button 
+                  onClick={() => setShowPreview(!showPreview)}
+                  style={{ 
+                    background: showPreview ? 'var(--accent-gradient)' : 'var(--bg-accent)', 
+                    color: '#fff', fontSize: '0.75rem', padding: '0.2rem 0.6rem', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer' 
+                  }}
+                >
+                  {showPreview ? '✕ Close Preview' : '👁 Show Preview'}
+                </button>
+              </div>
+              <select 
+                style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
+                value={q.language || 'javascript'}
+                disabled // Currently disabled as questions don't have language property yet
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', flex: 1, minHeight: '400px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <CodeEditor 
+                  value={currentAnswer}
+                  onChange={(val) => setAnswer(val || '')}
+                  height="400px"
+                  language={q.language || 'javascript'}
+                />
+              </div>
+              {showPreview && (
+                <div style={{ flex: 1, background: '#fff', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ background: '#f1f5f9', padding: '0.4rem 1rem', borderBottom: '1px solid #e2e8f0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                    Live Preview Output
+                  </div>
+                  <iframe 
+                    srcDoc={getProcessedSrcDoc(currentAnswer)}
+                    title="preview"
+                    style={{ flex: 1, border: 'none', width: '100%' }}
+                    sandbox="allow-scripts"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Fallback for old questions without type */}
@@ -523,6 +667,15 @@ export default function InterviewSession() {
           )}
         </div>
       </div>
+      
+      {/* AI Proctoring System */}
+      {assignment?.interviews?.proctoring_enabled && (
+        <ProctoringSystem 
+          assignmentId={assignmentId} 
+          isOffline={assignment?.interviews?.is_offline_mode} 
+          isSubmitted={submitted}
+        />
+      )}
     </div>
   );
 }

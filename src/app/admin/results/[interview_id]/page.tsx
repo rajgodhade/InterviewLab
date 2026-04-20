@@ -177,7 +177,6 @@ export default function InterviewResults() {
               <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>/ {totalQuestions}</span>
             </div>
           </div>
-          
           <div className="card" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h3 style={{ margin: 0, marginBottom: '0.25rem', fontSize: '1.5rem' }}>{selectedAssignment.students.name}</h3>
@@ -207,6 +206,40 @@ export default function InterviewResults() {
             })()}
           </div>
 
+          {/* Proctoring Summary - Only show for Online interviews with proctoring enabled */}
+          {interview?.mode !== 'offline' && interview?.proctoring_enabled && (
+            <div className="card" style={{ marginBottom: '2rem', display: 'flex', gap: '2rem', background: 'rgba(59, 130, 246, 0.03)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+               <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: 0, marginBottom: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🛡️ Proctoring Security History</h4>
+                  <div style={{ display: 'flex', gap: '3rem' }}>
+                     <div>
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>Tab Switches</span>
+                        <strong style={{ fontSize: '1.1rem', color: selectedAssignment.tab_switches_count > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
+                          {selectedAssignment.tab_switches_count || 0} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Incidents</span>
+                        </strong>
+                     </div>
+                     <div>
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>Face Detection Alerts</span>
+                        <strong style={{ fontSize: '1.1rem', color: selectedAssignment.face_missing_count > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>
+                          {selectedAssignment.face_missing_count || 0} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Incidents</span>
+                        </strong>
+                     </div>
+                     {selectedAssignment.camera_access_denied && (
+                       <div>
+                          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>Webcam Permissions</span>
+                          <strong style={{ fontSize: '1rem', color: 'var(--danger)', fontWeight: 800 }}>
+                            🚫 ACCESS DENIED
+                          </strong>
+                       </div>
+                     )}
+                  </div>
+               </div>
+               <div style={{ display: 'flex', alignItems: 'center', color: (selectedAssignment.tab_switches_count > 0 || selectedAssignment.face_missing_count > 0 || selectedAssignment.camera_access_denied) ? 'var(--danger)' : 'var(--success)', fontSize: '0.8rem', fontWeight: 600 }}>
+                 {(selectedAssignment.tab_switches_count > 0 || selectedAssignment.face_missing_count > 0 || selectedAssignment.camera_access_denied) ? '⚠️ Flagged for Review' : '✅ No Security Issues'}
+               </div>
+            </div>
+          )}
+          
           <h4 style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border-color)' }}>Detailed Responses</h4>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

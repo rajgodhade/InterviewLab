@@ -192,19 +192,44 @@ export default function ViewInterviewQuestions() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                           <strong style={{ fontSize: '0.95rem' }}>{a.students?.name}</strong>
                           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <span style={{
-                              background: a.status === 'completed' ? 'var(--success)' : 'var(--accent-color)',
-                              padding: '0.15rem 0.5rem', borderRadius: '20px', fontSize: '0.7rem', color: '#fff', fontWeight: 600
-                            }}>
-                              {a.status.toUpperCase()}
-                            </span>
-                            <button 
-                              onClick={() => handleRemove(a.id, a.students?.name)}
-                              title="Remove assignment"
-                              style={{ background: 'transparent', color: 'var(--danger)', padding: '0.2rem', fontSize: '1rem', lineHeight: 1 }}
-                            >
-                              ✕
-                            </button>
+                            {a.status === 'completed' ? (
+                              <Link href={`/admin/results/${interviewId}?student=${a.student_id}`}>
+                                <span style={{
+                                  background: 'var(--success)',
+                                  padding: '0.15rem 0.5rem', borderRadius: '20px', fontSize: '0.7rem', color: '#fff', fontWeight: 600, cursor: 'pointer'
+                                }}>
+                                  {a.status.toUpperCase()} →
+                                </span>
+                              </Link>
+                            ) : (
+                              <span style={{
+                                background: 'var(--accent-color)',
+                                padding: '0.15rem 0.5rem', borderRadius: '20px', fontSize: '0.7rem', color: '#fff', fontWeight: 600
+                              }}>
+                                {a.status.toUpperCase()}
+                              </span>
+                            )}
+                            {a.status !== 'completed' && (
+                              <button 
+                                onClick={() => handleRemove(a.id, a.students?.name)}
+                                title="Remove assignment"
+                                style={{ 
+                                  background: 'rgba(239, 68, 68, 0.1)', 
+                                  color: 'var(--danger)', 
+                                  padding: '0.3rem', 
+                                  fontSize: '0.9rem', 
+                                  lineHeight: 1,
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                              >
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </div>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.25rem' }}>{a.students?.email}</p>
@@ -304,21 +329,44 @@ export default function ViewInterviewQuestions() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <span style={{
-                      background: a.status === 'completed' ? 'var(--success)' : 'var(--accent-color)',
-                      padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.65rem', color: '#fff', fontWeight: 600
-                    }}>
-                      {a.status.toUpperCase()}
-                    </span>
-                    <button 
-                      onClick={() => {
-                        handleRemove(a.id, a.students?.name);
-                        setViewingBatch(null);
-                      }}
-                      style={{ background: 'transparent', color: 'var(--danger)', fontSize: '1.1rem', padding: 0 }}
-                    >
-                      ✕
-                    </button>
+                    {a.status === 'completed' ? (
+                      <Link href={`/admin/results/${interviewId}?student=${a.student_id}`}>
+                        <span style={{
+                          background: 'var(--success)',
+                          padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.65rem', color: '#fff', fontWeight: 600, cursor: 'pointer'
+                        }}>
+                          {a.status.toUpperCase()} →
+                        </span>
+                      </Link>
+                    ) : (
+                      <>
+                        <span style={{
+                          background: 'var(--accent-color)',
+                          padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.65rem', color: '#fff', fontWeight: 600
+                        }}>
+                          {a.status.toUpperCase()}
+                        </span>
+                        <button 
+                          onClick={() => {
+                            handleRemove(a.id, a.students?.name);
+                            setViewingBatch(null);
+                          }}
+                          title="Remove assignment"
+                          style={{ 
+                            background: 'rgba(239, 68, 68, 0.1)', 
+                            color: 'var(--danger)', 
+                            padding: '0.3rem', 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1,
+                            borderRadius: '6px',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}

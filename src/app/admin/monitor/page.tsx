@@ -48,7 +48,7 @@ export default function AdminMonitorPage() {
         .select(`
           *,
           students (*),
-          interviews (title, technology, difficulty),
+          interviews (title, technology, difficulty, proctoring_enabled),
           responses (id)
         `)
         .eq('is_live', true)
@@ -176,6 +176,26 @@ export default function AdminMonitorPage() {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>Responses</div>
                   <div style={{ fontWeight: 700 }}>{session.responses?.length || 0} Questions</div>
                 </div>
+
+                {/* Proctoring Stats - Only show if enabled for this interview */}
+                {session.interviews?.proctoring_enabled && (
+                  <div style={{ textAlign: 'right', minWidth: '120px', padding: '0.5rem', background: (session.tab_switches_count > 0 || session.face_missing_count > 0) ? 'rgba(239, 68, 68, 0.05)' : 'transparent', borderRadius: '8px', border: (session.tab_switches_count > 0 || session.face_missing_count > 0) ? '1px solid rgba(239, 68, 68, 0.1)' : '1px solid transparent' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>Proctoring</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'flex-end' }}>
+                      <span style={{ fontSize: '0.8rem', color: session.tab_switches_count > 0 ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: session.tab_switches_count > 0 ? 700 : 500 }}>
+                        📑 Tabs: {session.tab_switches_count || 0}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: session.face_missing_count > 0 ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: session.face_missing_count > 0 ? 700 : 500 }}>
+                        👤 Face: {session.face_missing_count || 0}
+                      </span>
+                      {session.camera_access_denied && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 800, background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: '4px', marginTop: '0.2rem' }}>
+                          🚫 CAMERA DENIED
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <Link href={`/admin/live/${session.interview_id}`}>
                   <button style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>

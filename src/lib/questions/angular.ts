@@ -1,24 +1,112 @@
 import { QuestionBankItem } from './types';
 
 export const angularQuestions: QuestionBankItem[] = [
-  // ===== BEGINNER =====
-  { difficulty: 'Beginner', type: 'mcq', question: "What is the command to create a new Angular component using CLI?", options: ["ng new component", "ng create component", "ng g component", "ng add component"], answer: "ng g component" },
-  { difficulty: 'Beginner', type: 'mcq', question: "Which decorator is used to define an Angular module?", options: ["@Component", "@Directive", "@NgModule", "@Injectable"], answer: "@NgModule" },
-  { difficulty: 'Beginner', type: 'mcq', question: "What is the primary language used for Angular development?", options: ["JavaScript", "Python", "TypeScript", "Java"], answer: "TypeScript" },
-  { difficulty: 'Beginner', type: 'true_false', question: "Angular uses two-way data binding by default with [(ngModel)].", answer: "True" },
-  { difficulty: 'Beginner', type: 'true_false', question: "Interpolation in Angular uses single curly braces {}.", answer: "False" },
-  { difficulty: 'Beginner', type: 'short_answer', question: "What are Angular directives?", answer: "Directives are classes that add new behavior to elements in the template. There are three types: Components, Structural directives (*ngIf, *ngFor), and Attribute directives (ngClass, ngStyle)." },
 
-  // ===== INTERMEDIATE =====
-  { difficulty: 'Intermediate', type: 'mcq', question: "Which life cycle hook is called after Angular has initialized all data-bound properties?", options: ["ngOnInit", "ngOnChanges", "ngAfterContentInit", "ngDoCheck"], answer: "ngOnInit" },
-  { difficulty: 'Intermediate', type: 'mcq', question: "What is the purpose of a Pipe in Angular?", options: ["To handle routing", "To transform data in templates", "To manage state", "To inject services"], answer: "To transform data in templates" },
-  { difficulty: 'Intermediate', type: 'true_false', question: "Reactive Forms are more scalable and robust than Template-driven forms.", answer: "True" },
-  { difficulty: 'Intermediate', type: 'short_answer', question: "What is Dependency Injection in Angular?", answer: "DI is a coding pattern in which a class asks for dependencies from external sources rather than creating them itself. Angular's DI framework provides dependencies to components, directives, and services." },
-  { difficulty: 'Intermediate', type: 'long_answer', question: "Explain the difference between a Component and a Directive.", answer: "A component is a directive with a template. It is a building block of an Angular application. A directive is used to add behavior to an existing DOM element. All components are directives, but not all directives are components." },
+  // ===== BEGINNER (1–30) =====
+  { difficulty: 'Beginner', type: 'mcq', question: "What is Angular?", options: ["Framework", "Library", "Language", "Database"], answer: "Framework" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which language is used in Angular?", options: ["Java", "Python", "TypeScript", "PHP"], answer: "TypeScript" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What is a component?", options: ["Service", "UI block", "Module", "Pipe"], answer: "UI block" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which decorator defines a component?", options: ["@NgModule", "@Component", "@Injectable", "@Pipe"], answer: "@Component" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What is interpolation?", options: ["Binding syntax", "Loop", "Condition", "Directive"], answer: "Binding syntax" },
 
-  // ===== ADVANCED =====
-  { difficulty: 'Advanced', type: 'mcq', question: "What is the purpose of NgZone in Angular?", options: ["To manage routing", "To run code outside of Angular's change detection", "To handle HTTP requests", "To store global state"], answer: "To run code outside of Angular's change detection" },
-  { difficulty: 'Advanced', type: 'true_false', question: "ChangeDetectionStrategy.OnPush can improve performance by reducing the number of checks.", answer: "True" },
-  { difficulty: 'Advanced', type: 'short_answer', question: "What is AOT compilation in Angular?", answer: "Ahead-of-Time (AOT) compilation converts Angular HTML and TypeScript code into efficient JavaScript code during the build phase, before the browser downloads and runs that code." },
-  { difficulty: 'Advanced', type: 'long_answer', question: "Explain the concept of Lazy Loading in Angular modules.", answer: "Lazy loading is a technique that allows you to load JavaScript components only when they are needed, rather than loading everything when the application starts. This significantly improves the initial load time of the application." },
+  { difficulty: 'Beginner', type: 'true_false', question: "Angular CLI is used to create Angular projects.", answer: "True" },
+  { difficulty: 'Beginner', type: 'true_false', question: "Angular supports two-way data binding.", answer: "True" },
+  { difficulty: 'Beginner', type: 'true_false', question: "Components cannot have styles.", answer: "False" },
+
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is data binding?", answer: "It connects data between component and template." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is a module?", answer: "A module groups related components and services." },
+
+  { difficulty: 'Beginner', type: 'mcq', question: "Which directive is used for looping?", options: ["*ngIf", "*ngFor", "*ngSwitch", "*ngLoop"], answer: "*ngFor" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which directive is used for condition?", options: ["*ngIf", "*ngFor", "*ngSwitch", "*ngClass"], answer: "*ngIf" },
+
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is a template?", answer: "HTML view of a component." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is Angular CLI?", answer: "Command-line tool to manage Angular apps." },
+
+  { difficulty: 'Beginner', type: 'mcq', question: "What file starts Angular app?", options: ["main.ts", "app.ts", "index.js", "server.ts"], answer: "main.ts" },
+
+  { difficulty: 'Beginner', type: 'true_false', question: "Services are used for business logic.", answer: "True" },
+
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is a service?", answer: "Reusable logic shared across components." },
+
+  // ===== INTERMEDIATE (31–70) =====
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is Dependency Injection?", options: ["Design pattern", "Directive", "Pipe", "Module"], answer: "Design pattern" },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "Explain DI.", answer: "Dependencies are provided externally instead of created inside class." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which lifecycle hook runs first?", options: ["ngOnInit", "constructor", "ngAfterViewInit", "ngOnChanges"], answer: "constructor" },
+
+  { difficulty: 'Intermediate', type: 'true_false', question: "ngOnInit runs after constructor.", answer: "True" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is ngOnInit?", answer: "Lifecycle hook called after component initialization." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is a pipe?", options: ["Service", "Transform data", "Directive", "Module"], answer: "Transform data" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is a custom pipe?", answer: "User-defined data transformation." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which module handles routing?", options: ["RouterModule", "HttpModule", "FormsModule", "CoreModule"], answer: "RouterModule" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is routing?", answer: "Navigation between views." },
+
+  { difficulty: 'Intermediate', type: 'true_false', question: "Lazy loading improves performance.", answer: "True" },
+
+  { difficulty: 'Intermediate', type: 'long_answer', question: "Explain lazy loading.", answer: "Loads modules only when required to reduce initial load time." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which form type is scalable?", options: ["Template", "Reactive", "Static", "Inline"], answer: "Reactive" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is Reactive Form?", answer: "Form built using FormControl & FormGroup." },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is FormGroup?", answer: "Group of form controls." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which decorator is for services?", options: ["@Component", "@Injectable", "@Pipe", "@Directive"], answer: "@Injectable" },
+
+  { difficulty: 'Intermediate', type: 'true_false', question: "Observables are part of RxJS.", answer: "True" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is Observable?", answer: "Stream of async data." },
+
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which operator maps values?", options: ["map", "filter", "reduce", "find"], answer: "map" },
+
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is HttpClient?", answer: "Service to make HTTP calls." },
+
+  { difficulty: 'Intermediate', type: 'true_false', question: "Angular supports REST APIs.", answer: "True" },
+
+  // ===== ADVANCED (71–100) =====
+  { difficulty: 'Advanced', type: 'mcq', question: "What is Change Detection?", options: ["Tracking changes", "Routing", "Rendering", "Compilation"], answer: "Tracking changes" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "Explain change detection.", answer: "Angular updates DOM when data changes." },
+
+  { difficulty: 'Advanced', type: 'mcq', question: "Which strategy improves performance?", options: ["Default", "OnPush", "Lazy", "Fast"], answer: "OnPush" },
+
+  { difficulty: 'Advanced', type: 'true_false', question: "OnPush reduces checks.", answer: "True" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is AOT?", answer: "Ahead-of-Time compilation." },
+
+  { difficulty: 'Advanced', type: 'long_answer', question: "Explain AOT vs JIT.", answer: "AOT compiles before runtime, JIT compiles in browser." },
+
+  { difficulty: 'Advanced', type: 'mcq', question: "What is NgZone?", options: ["State", "Execution context", "Routing", "Pipe"], answer: "Execution context" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is NgZone?", answer: "Controls Angular change detection execution." },
+
+  { difficulty: 'Advanced', type: 'mcq', question: "What is trackBy?", options: ["Optimize ngFor", "Routing", "Pipe", "Service"], answer: "Optimize ngFor" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is trackBy?", answer: "Improves rendering performance in ngFor." },
+
+  { difficulty: 'Advanced', type: 'true_false', question: "SSR improves SEO.", answer: "True" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is Angular Universal?", answer: "Server-side rendering for Angular." },
+
+  { difficulty: 'Advanced', type: 'mcq', question: "What is state management?", options: ["Managing app data", "Routing", "Styling", "Testing"], answer: "Managing app data" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is NgRx?", answer: "Redux-like state management library." },
+
+  { difficulty: 'Advanced', type: 'long_answer', question: "Explain NgRx.", answer: "Uses store, actions, reducers to manage state." },
+
+  { difficulty: 'Advanced', type: 'mcq', question: "What is a resolver?", options: ["Fetch data before route", "Pipe", "Service", "Guard"], answer: "Fetch data before route" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is a guard?", answer: "Controls route access." },
+
+  { difficulty: 'Advanced', type: 'true_false', question: "Guards protect routes.", answer: "True" },
+
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is interceptor?", answer: "Intercepts HTTP requests." },
+
+  { difficulty: 'Advanced', type: 'long_answer', question: "Explain interceptors.", answer: "Used to modify HTTP requests/responses globally." },
+
 ];

@@ -14,6 +14,15 @@ import { typescriptQuestions } from './typescript';
 import { phpQuestions } from './php';
 import { jsonQuestions } from './json';
 import { apiQuestions } from './api';
+import { vueQuestions } from './vue';
+import { gitQuestions } from './git';
+import { npmQuestions } from './npm';
+import { yarnQuestions } from './yarn';
+import { sqlQuestions } from './sql';
+import { mongodbQuestions } from './mongodb';
+import { tailwindQuestions } from './tailwind';
+import { awsQuestions } from './aws';
+import { dockerQuestions } from './docker';
 import { QuestionBankItem } from './types';
 
 export const questionBank: Record<string, QuestionBankItem[]> = {
@@ -33,6 +42,15 @@ export const questionBank: Record<string, QuestionBankItem[]> = {
   php: phpQuestions,
   json: jsonQuestions,
   api: apiQuestions,
+  vue: vueQuestions,
+  git: gitQuestions,
+  npm: npmQuestions,
+  yarn: yarnQuestions,
+  sql: sqlQuestions,
+  mongodb: mongodbQuestions,
+  tailwind: tailwindQuestions,
+  aws: awsQuestions,
+  docker: dockerQuestions,
 };
 
 export * from './types';

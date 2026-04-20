@@ -15,7 +15,26 @@ function normalizeTech(technology: string): string[] {
     '.net': 'dotnet',
     'c#': 'csharp',
     'c++': 'cpp',
-    'ts': 'typescript'
+    'ts': 'typescript',
+    'vue': 'vue',
+    'git': 'git',
+    'npm': 'npm',
+    'yarn': 'yarn',
+    'next': 'react',
+    'react native': 'react',
+    'mern': 'react',
+    'frontend': 'javascript',
+    'backend': 'nodejs',
+    'fullstack': 'javascript',
+    'devops': 'git',
+    'mongodb': 'mongodb',
+    'mongo': 'mongodb',
+    'sql': 'sql',
+    'mysql': 'sql',
+    'postgres': 'sql',
+    'tailwind': 'tailwind',
+    'aws': 'aws',
+    'docker': 'docker'
   };
 
   // Check mapping first
