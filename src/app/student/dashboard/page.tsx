@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { getTechIcons } from '@/utils/tech-utils';
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -276,7 +277,12 @@ export default function StudentDashboard() {
                 <div className="flex-between">
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{assignment.interviews?.title}</h3>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ display: 'flex', gap: '2px' }}>
+                        {getTechIcons(assignment.interviews?.technology).map((icon, idx) => (
+                          <span key={idx}>{icon}</span>
+                        ))}
+                      </span>
                       {assignment.interviews?.technology} • {assignment.duration} mins
                     </div>
                   </div>
@@ -365,7 +371,14 @@ export default function StudentDashboard() {
                             }}>OFFLINE</span>
                           )}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{assignment.interviews?.technology} • {assignment.duration} mins</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ display: 'flex', gap: '2px' }}>
+                            {getTechIcons(assignment.interviews?.technology).map((icon, idx) => (
+                              <span key={idx}>{icon}</span>
+                            ))}
+                          </span>
+                          {assignment.interviews?.technology} • {assignment.duration} mins
+                        </div>
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                         {assignment.scheduled_date || 'Not scheduled'}

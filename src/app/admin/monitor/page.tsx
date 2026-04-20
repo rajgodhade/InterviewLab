@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
 import Link from 'next/link';
+import { getTechIcons } from '@/utils/tech-utils';
 
 export default function AdminMonitorPage() {
   const { showToast } = useUI();
@@ -94,7 +95,7 @@ export default function AdminMonitorPage() {
     <div className="container">
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ margin: 0 }}>Live Monitor</h1>
+          <h1 style={{ margin: 0 }}>Interview Monitor</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Track all students currently attempting interviews in real-time.</p>
           <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span>⚠️</span>
@@ -142,7 +143,14 @@ export default function AdminMonitorPage() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                   <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{session.students?.name}</h4>
-                  <span style={{ fontSize: '0.7rem', background: 'var(--bg-accent)', padding: '0.15rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{session.interviews?.technology}</span>
+                  <span style={{ fontSize: '0.7rem', background: 'var(--bg-accent)', padding: '0.15rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <span style={{ display: 'flex', gap: '2px' }}>
+                      {getTechIcons(session.interviews?.technology).map((icon, idx) => (
+                        <span key={idx}>{icon}</span>
+                      ))}
+                    </span>
+                    {session.interviews?.technology}
+                  </span>
                 </div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   Attempting: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{session.interviews?.title}</span>
@@ -171,7 +179,7 @@ export default function AdminMonitorPage() {
 
                 <Link href={`/admin/live/${session.interview_id}`}>
                   <button style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                    Open Live Room
+                    Open Monitor Session
                   </button>
                 </Link>
               </div>

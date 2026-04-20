@@ -187,6 +187,19 @@ export default function StudentProfile() {
                     <span style={{ width: '10px', height: '10px', background: 'var(--success)', borderRadius: '50%' }}></span>
                     <strong style={{ fontSize: '1rem' }}>Active</strong>
                   </div>
+                  <Link href={`/admin/messages?student=${studentId}`} style={{ display: 'inline-block', marginTop: '1rem' }}>
+                    <button style={{ 
+                      padding: '0.5rem 1rem', 
+                      fontSize: '0.85rem', 
+                      background: 'var(--accent-gradient)', 
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      💬 Message Student
+                    </button>
+                  </Link>
                 </div>
               </div>
             </div>

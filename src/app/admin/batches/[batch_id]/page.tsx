@@ -35,7 +35,9 @@ export default function ManageBatch() {
         .select('id, students(*)')
         .eq('group_id', batchId);
       if (mError) throw mError;
-      setMembers(mData || []);
+      // Filter out archived students from the member list
+      const activeMembers = (mData || []).filter(m => m.students && !m.students.is_archived);
+      setMembers(activeMembers);
     } catch (err: any) {
       console.error(err);
       showToast('Failed to load batch details: ' + err.message, 'error');

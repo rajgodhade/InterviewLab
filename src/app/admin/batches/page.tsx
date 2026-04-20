@@ -32,12 +32,21 @@ export default function BatchesDashboard() {
         .from('groups')
         .select(`
           *,
-          group_members(count)
+          group_members(
+            students(is_archived)
+          )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBatches(data || []);
+      
+      // Process batches to count only active (non-archived) members
+      const processedBatches = (data || []).map(batch => ({
+        ...batch,
+        activeMemberCount: batch.group_members?.filter((m: any) => m.students && !m.students.is_archived).length || 0
+      }));
+      
+      setBatches(processedBatches);
     } catch (err: any) {
       console.error(err);
       showToast('Failed to load batches: ' + err.message, 'error');
@@ -218,7 +227,7 @@ export default function BatchesDashboard() {
               
               <div className="flex-between" style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <strong>{b.group_members?.[0]?.count || 0}</strong> members
+                  <strong>{b.activeMemberCount || 0}</strong> members
                 </span>
                 <Link href={`/admin/batches/${b.id}`}>
                   <button style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
@@ -251,7 +260,7 @@ export default function BatchesDashboard() {
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                     <span style={{ background: 'var(--bg-accent)', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.85rem' }}>
-                      {b.group_members?.[0]?.count || 0}
+                      {b.activeMemberCount || 0}
                     </span>
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'right' }}>

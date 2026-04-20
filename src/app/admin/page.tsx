@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/UIProvider';
+import { getTechIcons } from '@/utils/tech-utils';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -24,6 +25,43 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   useEffect(() => {
+    // Realtime subscription for interview assignments to track live room status
+    // Use a unique channel name to avoid "callbacks after subscribe" errors on re-mount
+    const channelId = `dashboard-live-updates-${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interview_assignments' },
+        (payload) => {
+          setInterviews((prev) => {
+            return prev.map(interview => {
+              // If this assignment belongs to this interview
+              const targetInterviewId = payload.new ? (payload.new as any).interview_id : (payload.old as any).interview_id;
+              
+              if (targetInterviewId === interview.id) {
+                const updatedAssignments = [...(interview.interview_assignments || [])];
+                
+                if (payload.eventType === 'INSERT') {
+                  updatedAssignments.push(payload.new);
+                } else if (payload.eventType === 'UPDATE') {
+                  const idx = updatedAssignments.findIndex(a => a.id === payload.new.id);
+                  if (idx !== -1) updatedAssignments[idx] = payload.new;
+                  else updatedAssignments.push(payload.new);
+                } else if (payload.eventType === 'DELETE') {
+                  const idx = updatedAssignments.findIndex(a => a.id === payload.old.id);
+                  if (idx !== -1) updatedAssignments.splice(idx, 1);
+                }
+                
+                return { ...interview, interview_assignments: updatedAssignments };
+              }
+              return interview;
+            });
+          });
+        }
+      )
+      .subscribe();
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -33,7 +71,12 @@ export default function AdminDashboard() {
       fetchData();
       fetchViewMode();
     };
+
     checkAuth();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchViewMode = async () => {
@@ -77,7 +120,7 @@ export default function AdminDashboard() {
       // 1. Fetch Interviews and assignments
       const { data: intData, error: intError } = await supabase
         .from('interviews')
-        .select('*, interview_assignments(status)')
+        .select('*, interview_assignments(status, is_live)')
         .order('created_at', { ascending: false });
       
       if (intError) throw intError;
@@ -428,7 +471,11 @@ export default function AdminDashboard() {
                   <h3 style={{ marginBottom: '0.75rem', paddingRight: '2.5rem', fontSize: '1.4rem', lineHeight: '1.2', fontWeight: 800 }}>{interview.title}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.8rem' }}>💻</span>
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        {getTechIcons(interview.technology).map((icon, idx) => (
+                          <span key={idx} style={{ fontSize: '0.8rem' }}>{icon}</span>
+                        ))}
+                      </div>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{interview.technology}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
@@ -449,6 +496,17 @@ export default function AdminDashboard() {
                         padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(239, 68, 68, 0.2)'
                       }}>
                         Offline
+                      </span>
+                    )}
+                    {interview.interview_assignments?.some((a: any) => a.is_live) && (
+                      <span style={{ 
+                        background: 'rgba(16, 185, 129, 0.15)', 
+                        color: 'var(--success)', 
+                        padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', border: '1px solid rgba(16, 185, 129, 0.2)',
+                        display: 'flex', alignItems: 'center', gap: '0.4rem'
+                      }}>
+                        <span style={{ width: '6px', height: '6px', background: 'var(--success)', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }}></span>
+                        Live Now
                       </span>
                     )}
                   </div>
@@ -480,12 +538,21 @@ export default function AdminDashboard() {
                   </Link>
                   <Link href={`/admin/live/${interview.id}`}>
                     <button style={{ 
-                      width: '100%', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--danger)', 
-                      border: '1px solid rgba(244, 63, 94, 0.2)', fontSize: '0.85rem', padding: '0.75rem', fontWeight: 700,
+                      width: '100%', 
+                      background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', 
+                      color: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
+                      border: interview.interview_assignments?.some((a: any) => a.is_live) ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(244, 63, 94, 0.2)', 
+                      fontSize: '0.85rem', padding: '0.75rem', fontWeight: 700,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                     }}>
-                      <span style={{ width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%' }}></span>
-                      Live Room
+                      <span style={{ 
+                        width: '8px', 
+                        height: '8px', 
+                        background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
+                        borderRadius: '50%',
+                        animation: interview.interview_assignments?.some((a: any) => a.is_live) ? 'pulse-live 1.5s infinite' : 'none'
+                      }}></span>
+                      Monitor Session
                     </button>
                   </Link>
                   <Link href={`/admin/results/${interview.id}`}>
@@ -524,10 +591,26 @@ export default function AdminDashboard() {
                 <div style={{ flex: 1 }}>
                   <h4 style={{ margin: 0, fontSize: '1.2rem', marginBottom: '0.4rem' }}>{interview.title}</h4>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>💻 {interview.technology}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ display: 'flex', gap: '2px' }}>
+                        {getTechIcons(interview.technology).map((icon, idx) => (
+                          <span key={idx}>{icon}</span>
+                        ))}
+                      </span> 
+                      {interview.technology}
+                    </span>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>🎯 {interview.difficulty}</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-color)', background: 'rgba(59,130,246,0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>{interview.mode}</span>
                     {interview.is_offline_mode && <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>Offline</span>}
+                    {interview.interview_assignments?.some((a: any) => a.is_live) && (
+                      <span style={{ 
+                        fontSize: '0.7rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '0.1rem 0.5rem', borderRadius: '4px',
+                        display: 'flex', alignItems: 'center', gap: '0.3rem'
+                      }}>
+                        <span style={{ width: '5px', height: '5px', background: 'var(--success)', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }}></span>
+                        LIVE
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -544,7 +627,14 @@ export default function AdminDashboard() {
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <Link href={`/admin/live/${interview.id}`}>
-                    <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--danger)', border: '1px solid rgba(244, 63, 94, 0.1)' }}>Live</button>
+                    <button style={{ 
+                      padding: '0.6rem 1rem', fontSize: '0.85rem', 
+                      background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', 
+                      color: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
+                      border: interview.interview_assignments?.some((a: any) => a.is_live) ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(244, 63, 94, 0.1)' 
+                    }}>
+                      Monitor
+                    </button>
                   </Link>
                   <Link href={`/admin/view/${interview.id}`}>
                     <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-primary)' }}>Manage</button>

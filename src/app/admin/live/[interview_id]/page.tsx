@@ -55,7 +55,7 @@ export default function LiveRoom() {
     }
   };
 
-  if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Entering Live Room...</div>;
+  if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Entering Monitor Session...</div>;
 
   return (
     <div className="container" style={{ maxWidth: '1200px' }}>
@@ -63,7 +63,7 @@ export default function LiveRoom() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <span style={{ width: '12px', height: '12px', background: 'var(--danger)', borderRadius: '50%', boxShadow: '0 0 10px var(--danger)', animation: 'pulse-live 1.5s infinite' }}></span>
-            <h2 style={{ margin: 0 }}>Live Interview Room</h2>
+            <h2 style={{ margin: 0 }}>Interview Monitoring Session</h2>
           </div>
           <p style={{ color: 'var(--text-secondary)' }}>Interview: <strong>{interview?.title}</strong> | Tracking {assignments.length} assigned seats</p>
         </div>

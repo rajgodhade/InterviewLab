@@ -12,6 +12,7 @@ export default function Navigation() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Close menu when route changes
   useEffect(() => {
@@ -52,15 +53,16 @@ export default function Navigation() {
   // Determine if we are IN an interview (not just on student portal)
   const isInsideInterview = pathname?.startsWith('/interview/');
 
-  // Fetch unread notifications for students
+  // Fetch unread notifications and messages for students
   useEffect(() => {
     if (isStudentRoute && isStudent) {
       const email = localStorage.getItem('student_email');
       if (email) {
         fetchUnreadCount(email);
+        fetchUnreadMessages(email);
         
-        // Setup Realtime Subscription
-        const channel = supabase
+        // Setup Realtime Subscription for notifications
+        const notifChannel = supabase
           .channel('nav-notifications')
           .on(
             'postgres_changes',
@@ -69,12 +71,43 @@ export default function Navigation() {
           )
           .subscribe();
 
+        // Setup Realtime Subscription for messages
+        const msgChannel = supabase
+          .channel('nav-messages')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'messages' },
+            () => fetchUnreadMessages(email)
+          )
+          .subscribe();
+
         return () => {
-          supabase.removeChannel(channel);
+          supabase.removeChannel(notifChannel);
+          supabase.removeChannel(msgChannel);
         };
       }
     }
   }, [isStudentRoute, isStudent, pathname]);
+
+  // Fetch unread messages for admins
+  useEffect(() => {
+    if (isAdmin || isAdminRoute) {
+      fetchAdminUnreadMessages();
+      
+      const channel = supabase
+        .channel('admin-nav-messages')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'messages' },
+          () => fetchAdminUnreadMessages()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isAdmin, isAdminRoute, pathname]);
 
   const fetchUnreadCount = async (email: string) => {
     try {
@@ -93,27 +126,60 @@ export default function Navigation() {
     }
   };
 
+  const fetchUnreadMessages = async (email: string) => {
+    try {
+      const { data: student } = await supabase.from('students').select('id').eq('email', email).single();
+      if (!student) return;
+
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_id', student.id)
+        .eq('sender_role', 'admin')
+        .eq('is_read', false);
+
+      setUnreadMessages(count || 0);
+    } catch (err) {
+      console.error('Error fetching unread messages:', err);
+    }
+  };
+
+  const fetchAdminUnreadMessages = async () => {
+    try {
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('sender_role', 'student')
+        .eq('is_read', false);
+
+      setUnreadMessages(count || 0);
+    } catch (err) {
+      console.error('Error fetching admin unread messages:', err);
+    }
+  };
+
   let navLinks = null;
 
   if (isInsideInterview) {
     navLinks = <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Interview in Progress...</span>;
   } else if (isStudentRoute) {
     if (isStudent) {
+      const isActive = (path: string) => pathname === path || (path !== '/' && pathname?.startsWith(path));
       navLinks = (
         <>
-          <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: pathname === '/student/dashboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/dashboard' ? 700 : 500 }}>My Interviews</Link>
-          <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: pathname === '/student/study-material' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/study-material' ? 700 : 500 }}>Study Material</Link>
-          <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/student/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/student/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
+          <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>My Interviews</Link>
+          <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: isActive('/student/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/study-material') ? 700 : 500 }}>Study Material</Link>
+          <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/student/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
           <Link href="/student/inbox" style={{ 
             fontSize: '0.9rem', 
-            color: pathname === '/student/inbox' ? 'var(--accent-color)' : 'inherit', 
+            color: isActive('/student/inbox') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
-            fontWeight: pathname === '/student/inbox' ? 700 : 500,
+            fontWeight: isActive('/student/inbox') ? 700 : 500,
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem'
           }}>
-            Inbox
+            Notifications
             {unreadCount > 0 && (
               <span style={{ 
                 background: 'var(--accent-color)', 
@@ -128,20 +194,70 @@ export default function Navigation() {
               </span>
             )}
           </Link>
+          <Link href="/student/messages" style={{ 
+            fontSize: '0.9rem', 
+            color: isActive('/student/messages') ? 'var(--accent-color)' : 'inherit', 
+            textDecoration: 'none', 
+            fontWeight: isActive('/student/messages') ? 700 : 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}>
+            Messages
+            {unreadMessages > 0 && (
+              <span style={{ 
+                background: '#ef4444', 
+                color: '#fff', 
+                fontSize: '0.65rem', 
+                padding: '0.1rem 0.4rem', 
+                borderRadius: '10px', 
+                fontWeight: 800,
+              }}>
+                {unreadMessages}
+              </span>
+            )}
+          </Link>
         </>
       );
     }
   } else if (!isLoginRoute) {
     // Admin or Home route
     if (isAdmin || isAdminRoute) {
+      const isActive = (path: string) => {
+        if (path === '/admin') return pathname === '/admin';
+        return pathname?.startsWith(path);
+      };
       navLinks = (
         <>
-          <Link href="/admin" style={{ fontSize: '0.9rem', color: pathname === '/admin' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin' ? 700 : 500 }}>Dashboard</Link>
-          <Link href="/admin/batches" style={{ fontSize: '0.9rem', color: pathname === '/admin/batches' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/batches' ? 700 : 500 }}>Batches</Link>
-          <Link href="/admin/students" style={{ fontSize: '0.9rem', color: pathname === '/admin/students' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/students' ? 700 : 500 }}>Students</Link>
-          <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: pathname === '/admin/leaderboard' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/leaderboard' ? 700 : 500 }}>Leaderboard</Link>
-          <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: pathname === '/admin/monitor' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/monitor' ? 700 : 500 }}>Monitor</Link>
-          <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: pathname === '/admin/study-material' ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: pathname === '/admin/study-material' ? 700 : 500 }}>Study Material</Link>
+          <Link href="/admin" style={{ fontSize: '0.9rem', color: isActive('/admin') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin') ? 700 : 500 }}>Dashboard</Link>
+          <Link href="/admin/batches" style={{ fontSize: '0.9rem', color: isActive('/admin/batches') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/batches') ? 700 : 500 }}>Batches</Link>
+          <Link href="/admin/students" style={{ fontSize: '0.9rem', color: isActive('/admin/students') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/students') ? 700 : 500 }}>Students</Link>
+          <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: isActive('/admin/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/study-material') ? 700 : 500 }}>Study Material</Link>
+          <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
+          <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
+          <Link href="/admin/messages" style={{ 
+            fontSize: '0.9rem', 
+            color: isActive('/admin/messages') ? 'var(--accent-color)' : 'inherit', 
+            textDecoration: 'none', 
+            fontWeight: isActive('/admin/messages') ? 700 : 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}>
+            Messages
+            {unreadMessages > 0 && (
+              <span style={{ 
+                background: '#ef4444', 
+                color: '#fff', 
+                fontSize: '0.65rem', 
+                padding: '0.1rem 0.4rem', 
+                borderRadius: '10px', 
+                fontWeight: 800,
+              }}>
+                {unreadMessages}
+              </span>
+            )}
+          </Link>
         </>
       );
     }
@@ -154,7 +270,10 @@ export default function Navigation() {
       backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border-color)', 
       display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
     }}>
-      <Link href={isInsideInterview ? '#' : "/"} style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', textDecoration: 'none', cursor: isInsideInterview ? 'default' : 'pointer', zIndex: 1001 }}>
+      <Link 
+        href={isInsideInterview ? '#' : (isAdmin || isAdminRoute ? '/admin' : (isStudent || isStudentRoute ? '/student/dashboard' : '/'))} 
+        style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', textDecoration: 'none', cursor: isInsideInterview ? 'default' : 'pointer', zIndex: 1001 }}
+      >
         Interview<span style={{ color: 'var(--accent-color)' }}>Lab</span>
       </Link>
 

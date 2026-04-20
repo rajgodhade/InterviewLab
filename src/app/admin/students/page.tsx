@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useUI } from '@/components/UIProvider';
@@ -16,10 +16,16 @@ export default function StudentProfileList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newStudents, setNewStudents] = useState([{ name: '', email: '' }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, showArchived]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -229,12 +235,22 @@ export default function StudentProfileList() {
     setSelectedIds([]);
   };
 
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          s.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesArchive = (s.is_archived || false) === showArchived;
-    return matchesSearch && matchesArchive;
-  });
+  const filteredStudents = useMemo(() => {
+    return students.filter(s => {
+      const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            s.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesArchive = (s.is_archived || false) === showArchived;
+      return matchesSearch && matchesArchive;
+    });
+  }, [students, searchTerm, showArchived]);
+
+  const { currentItems, totalPages } = useMemo(() => {
+    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+    return { currentItems, totalPages };
+  }, [filteredStudents, currentPage, itemsPerPage]);
 
   if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading student profiles...</div>;
 
@@ -407,7 +423,7 @@ export default function StudentProfileList() {
         </div>
       ) : viewMode === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '1.5rem' }}>
-          {filteredStudents.map((student) => (
+          {currentItems.map((student) => (
             <div 
               key={student.id} 
               className="card" 
@@ -419,6 +435,7 @@ export default function StudentProfileList() {
                 position: 'relative'
               }}
             >
+              {/* Selection Checkbox */}
               {isSelectionMode && (
                 <input 
                   type="checkbox" 
@@ -427,61 +444,111 @@ export default function StudentProfileList() {
                   style={{ position: 'absolute', top: '1rem', right: '1rem', width: '18px', height: '18px', zIndex: 2 }}
                 />
               )}
-              <div className="flex-between" style={{ paddingRight: isSelectionMode ? '1.5rem' : '0' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', textAlign: 'left' }}>
-                  <div style={{ 
-                    width: '56px', 
-                    height: '56px', 
-                    borderRadius: '50%', 
-                    overflow: 'hidden', 
-                    background: 'var(--bg-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.25rem',
-                    fontWeight: 'bold',
-                    border: student.is_archived ? '2px solid var(--text-secondary)' : '2px solid var(--accent-color)',
-                    flexShrink: 0
-                  }}>
-                    {student.photo_url ? (
-                      <img src={student.photo_url} alt={student.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span>{student.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.name}</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.1rem 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.email}</p>
-                  </div>
+
+              {/* Student Header Info */}
+              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                <div style={{ 
+                  width: '64px', 
+                  height: '64px', 
+                  borderRadius: '18px', 
+                  overflow: 'hidden', 
+                  background: 'var(--bg-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  border: student.is_archived ? '2px solid var(--text-secondary)' : '2px solid var(--accent-color)',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}>
+                  {student.photo_url ? (
+                    <img src={student.photo_url} alt={student.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ color: student.is_archived ? 'var(--text-secondary)' : 'var(--accent-color)' }}>{student.name.charAt(0)}</span>
+                  )}
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sessions</span>
-                  <strong style={{ display: 'block', fontSize: '1.2rem', color: student.is_archived ? 'var(--text-secondary)' : 'var(--accent-color)' }}>{student.interview_assignments?.length || 0}</strong>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, wordBreak: 'break-word', lineHeight: 1.2 }}>{student.name}</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0', wordBreak: 'break-all' }}>{student.email}</p>
                 </div>
               </div>
+
+              {/* Stats Bar */}
+              <div style={{ 
+                background: 'rgba(255, 255, 255, 0.03)', 
+                padding: '0.75rem 1rem', 
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Sessions</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: student.is_archived ? 'var(--text-secondary)' : 'var(--accent-color)' }}>
+                  {student.interview_assignments?.length || 0}
+                </span>
+              </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '0.75rem', marginTop: 'auto' }}>
-                <Link href={`/admin/students/${student.id}`}>
-                  <button style={{ width: '100%', background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
-                    View Record
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto' }}>
+                <Link href={`/admin/students/${student.id}`} style={{ flex: 1 }}>
+                  <button style={{ 
+                    width: '100%', 
+                    background: 'var(--bg-accent)', 
+                    color: 'var(--text-primary)', 
+                    border: '1px solid var(--border-color)', 
+                    fontSize: '0.9rem', 
+                    padding: '0.75rem',
+                    fontWeight: 700,
+                    borderRadius: '10px'
+                  }}>
+                    View Full Record
                   </button>
                 </Link>
-                <button 
-                  onClick={() => handleArchive(student.id, student.is_archived)}
-                  title={student.is_archived ? 'Unarchive' : 'Archive'}
-                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '0 0.8rem' }}
-                >
-                  {student.is_archived ? '📤' : '📥'}
-                </button>
-                {student.is_archived && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
-                    onClick={() => handleDelete(student.id, student.name)}
-                    title="Delete permanently"
-                    style={{ background: 'rgba(244, 63, 94, 0.1)', color: 'var(--danger)', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '0 0.8rem' }}
+                    onClick={() => handleArchive(student.id, student.is_archived)}
+                    title={student.is_archived ? 'Unarchive' : 'Archive'}
+                    style={{ 
+                      background: 'rgba(255,255,255,0.05)', 
+                      color: 'var(--text-secondary)', 
+                      border: '1px solid var(--border-color)', 
+                      width: '44px', 
+                      height: '44px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      borderRadius: '10px', 
+                      fontSize: '1.2rem', 
+                      padding: 0,
+                      transition: 'all 0.2s ease'
+                    }}
                   >
-                    ✕
+                    {student.is_archived ? '📤' : '📥'}
                   </button>
-                )}
+                  {student.is_archived && (
+                    <button 
+                      onClick={() => handleDelete(student.id, student.name)}
+                      title="Delete permanently"
+                      style={{ 
+                        background: 'rgba(244, 63, 94, 0.1)', 
+                        color: 'var(--danger)', 
+                        border: '1px solid rgba(244, 63, 94, 0.2)', 
+                        width: '44px', 
+                        height: '44px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        borderRadius: '10px', 
+                        fontSize: '1rem', 
+                        padding: 0 
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -499,7 +566,7 @@ export default function StudentProfileList() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map((student) => (
+              {currentItems.map((student) => (
                 <tr 
                   key={student.id} 
                   style={{ 
@@ -557,6 +624,62 @@ export default function StudentProfileList() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          gap: '1rem', 
+          marginTop: '2.5rem', 
+          padding: '1.5rem',
+          background: 'var(--glass-bg)',
+          borderRadius: '16px',
+          border: '1px solid var(--border-color)',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'auto' }); }}
+            style={{ 
+              padding: '0.6rem 1.25rem', 
+              background: 'var(--bg-accent)', 
+              color: 'var(--text-primary)', 
+              border: '1px solid var(--border-color)', 
+              borderRadius: '10px',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1,
+              fontSize: '0.85rem',
+              fontWeight: 600
+            }}
+          >
+            Previous
+          </button>
+          
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', gap: '0.5rem' }}>
+            Page <strong style={{ color: 'var(--text-primary)' }}>{currentPage}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{totalPages}</strong>
+          </div>
+          
+          <button 
+            disabled={currentPage === totalPages}
+            onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'auto' }); }}
+            style={{ 
+              padding: '0.6rem 1.25rem', 
+              background: 'var(--bg-accent)', 
+              color: 'var(--text-primary)', 
+              border: '1px solid var(--border-color)', 
+              borderRadius: '10px',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1,
+              fontSize: '0.85rem',
+              fontWeight: 600
+            }}
+          >
+            Next
+          </button>
         </div>
       )}
 
