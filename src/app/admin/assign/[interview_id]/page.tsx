@@ -92,7 +92,7 @@ export default function AssignInterview() {
         student_id: sid,
         title: 'New Interview Assigned',
         message: `You have been assigned: ${interview?.title}. Check your dashboard.`,
-        link: '/student/dashboard'
+        link: '/student/interviews'
       }));
       await supabase.from('notifications').insert(notifications);
 
@@ -146,7 +146,7 @@ export default function AssignInterview() {
         student_id: sid,
         title: 'New Interview Assigned',
         message: `You have been assigned: ${interview?.title} as part of your batch.`,
-        link: '/student/dashboard'
+        link: '/student/interviews'
       }));
       await supabase.from('notifications').insert(notifications);
 

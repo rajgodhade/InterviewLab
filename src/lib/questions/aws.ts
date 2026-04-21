@@ -1,35 +1,92 @@
 import { QuestionBankItem } from './types';
 
 export const awsQuestions: QuestionBankItem[] = [
-  {
-    question: "What does AWS stand for?",
-    type: "short_answer",
-    difficulty: "Beginner",
-    answer: "Amazon Web Services"
-  },
-  {
-    question: "What is Amazon S3 used for?",
-    type: "long_answer",
-    difficulty: "Beginner",
-    answer: "Amazon S3 (Simple Storage Service) is an object storage service that offers industry-leading scalability, data availability, security, and performance."
-  },
-  {
-    question: "Which AWS service is used for serverless compute functions?",
-    type: "short_answer",
-    difficulty: "Intermediate",
-    answer: "AWS Lambda"
-  },
-  {
-    question: "What is an IAM user?",
-    type: "long_answer",
-    difficulty: "Intermediate",
-    answer: "IAM (Identity and Access Management) allows you to securely control access to AWS services and resources for your users."
-  },
-  {
-    question: "Which service is used for hosting relational databases in AWS?",
-    type: "mcq",
-    difficulty: "Beginner",
-    options: ["Redshift", "DynamoDB", "RDS", "ElastiCache"],
-    answer: "RDS"
-  }
+  // ===== ORIGINAL =====
+  { difficulty: 'Beginner', type: 'short_answer', question: "What does AWS stand for?", answer: "Amazon Web Services" },
+  { difficulty: 'Beginner', type: 'long_answer', question: "What is Amazon S3 used for?", answer: "Amazon S3 (Simple Storage Service) is an object storage service that offers industry-leading scalability, data availability, security, and performance." },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "Which AWS service is used for serverless compute functions?", answer: "AWS Lambda" },
+  { difficulty: 'Intermediate', type: 'long_answer', question: "What is an IAM user?", answer: "IAM (Identity and Access Management) allows you to securely control access to AWS services and resources for your users." },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which service is used for hosting relational databases in AWS?", options: ["Redshift", "DynamoDB", "RDS", "ElastiCache"], answer: "RDS" },
+
+  // ===== BEGINNER =====
+  { difficulty: 'Beginner', type: 'mcq', question: "What is Amazon EC2?", options: ["Email service", "Virtual server in the cloud", "DNS service", "Database service"], answer: "Virtual server in the cloud" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What is a region in AWS?", options: ["A single data center", "A group of Availability Zones in a geographic area", "A VPC boundary", "An IAM scope"], answer: "A group of Availability Zones in a geographic area" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which AWS service provides a managed DNS?", options: ["CloudFront", "Route 53", "API Gateway", "VPC"], answer: "Route 53" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What is Amazon CloudFront used for?", options: ["Relational databases", "Content Delivery Network", "Message queuing", "Code deployment"], answer: "Content Delivery Network" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which AWS service is used to send notifications?", options: ["SQS", "SNS", "SES", "CloudWatch"], answer: "SNS" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What does VPC stand for?", options: ["Virtual Private Cloud", "Virtual Public Container", "Verified Protocol Channel", "Virtual Process Core"], answer: "Virtual Private Cloud" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What type of database is Amazon DynamoDB?", options: ["Relational", "NoSQL", "In-memory", "Data warehouse"], answer: "NoSQL" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which AWS service is used for container orchestration?", options: ["EC2", "ECS", "S3", "IAM"], answer: "ECS" },
+  { difficulty: 'Beginner', type: 'mcq', question: "What is the default storage class in Amazon S3?", options: ["S3 Glacier", "S3 Standard", "S3 One Zone-IA", "S3 Intelligent-Tiering"], answer: "S3 Standard" },
+  { difficulty: 'Beginner', type: 'mcq', question: "Which AWS service provides a message queue?", options: ["SNS", "SQS", "SES", "Lambda"], answer: "SQS" },
+  { difficulty: 'Beginner', type: 'true_false', question: "AWS S3 stores data as objects.", answer: "True" },
+  { difficulty: 'Beginner', type: 'true_false', question: "Amazon EC2 instances are physical servers you own permanently.", answer: "False" },
+  { difficulty: 'Beginner', type: 'true_false', question: "IAM stands for Identity and Access Management.", answer: "True" },
+  { difficulty: 'Beginner', type: 'true_false', question: "AWS operates in only one region worldwide.", answer: "False" },
+  { difficulty: 'Beginner', type: 'true_false', question: "Amazon RDS supports MySQL as a database engine.", answer: "True" },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is an Availability Zone?", answer: "One or more discrete data centers within a region, each with redundant power, networking, and connectivity." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is an S3 bucket?", answer: "A container for storing objects (files and metadata) in Amazon S3." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is the purpose of AWS CloudWatch?", answer: "CloudWatch monitors AWS resources and applications by collecting metrics, logs, and setting alarms." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is AWS Elastic Beanstalk?", answer: "A platform-as-a-service that automatically handles deployment, scaling, and management of applications." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is the AWS Free Tier?", answer: "Limited free usage of many AWS services offered to new accounts for exploration and experimentation." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is an IAM Policy?", answer: "A document that defines permissions, specifying what actions are allowed or denied on which AWS resources." },
+  { difficulty: 'Beginner', type: 'short_answer', question: "What is Amazon SES?", answer: "Amazon SES (Simple Email Service) is a cloud-based email sending service for transactional and marketing emails." },
+
+  // ===== INTERMEDIATE =====
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which AWS service is used for infrastructure as code?", options: ["CloudWatch", "CloudFormation", "CloudTrail", "CloudFront"], answer: "CloudFormation" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which AWS service provides a managed Kubernetes service?", options: ["ECS", "EKS", "ECR", "Fargate"], answer: "EKS" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which IAM entity should permissions be assigned to instead of individual users?", options: ["Access Keys", "Roles", "Groups", "Root account"], answer: "Groups" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What does an Elastic Load Balancer do?", options: ["Stores files", "Distributes traffic across EC2 instances", "Monitors metrics", "Manages DNS"], answer: "Distributes traffic across EC2 instances" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is Amazon Redshift used for?", options: ["Object storage", "NoSQL queries", "Cloud data warehousing", "Container hosting"], answer: "Cloud data warehousing" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is Amazon ElastiCache used for?", options: ["Block storage", "In-memory caching", "Relational databases", "Data streaming"], answer: "In-memory caching" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is an AMI in AWS?", options: ["Access Management Interface", "Amazon Machine Image", "Automated Module Instance", "Application Migration Index"], answer: "Amazon Machine Image" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What is AWS Secrets Manager used for?", options: ["Storing EC2 snapshots", "Securely managing credentials and API keys", "Monitoring log files", "Managing IAM policies"], answer: "Securely managing credentials and API keys" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "Which AWS service records API call history for auditing?", options: ["CloudWatch", "Config", "CloudTrail", "GuardDuty"], answer: "CloudTrail" },
+  { difficulty: 'Intermediate', type: 'mcq', question: "What does Amazon ECR stand for?", options: ["Elastic Compute Registry", "Elastic Container Registry", "Encrypted Content Repository", "Elastic Cache Resource"], answer: "Elastic Container Registry" },
+  { difficulty: 'Intermediate', type: 'true_false', question: "AWS Lambda functions can run indefinitely without a timeout.", answer: "False" },
+  { difficulty: 'Intermediate', type: 'true_false', question: "Amazon SQS supports FIFO queues.", answer: "True" },
+  { difficulty: 'Intermediate', type: 'true_false', question: "CloudFormation templates can be written in JSON or YAML.", answer: "True" },
+  { difficulty: 'Intermediate', type: 'true_false', question: "Amazon RDS handles automatic database backups by default.", answer: "True" },
+  { difficulty: 'Intermediate', type: 'true_false', question: "S3 bucket names must be globally unique across all AWS accounts.", answer: "True" },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is an IAM Role?", answer: "An IAM Role is an identity with specific permissions that can be assumed by AWS services or users without long-term credentials." },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is the difference between S3 and EBS?", answer: "S3 is object storage accessible over the internet; EBS is block storage attached directly to an EC2 instance for low-latency access." },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is AWS Auto Scaling?", answer: "Auto Scaling automatically adjusts the number of EC2 instances based on demand to maintain performance and reduce cost." },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is the purpose of Security Groups in AWS?", answer: "Security Groups act as virtual firewalls for EC2 instances, controlling inbound and outbound traffic." },
+  { difficulty: 'Intermediate', type: 'short_answer', question: "What is the difference between Security Groups and NACLs?", answer: "Security Groups are stateful and applied at the instance level; NACLs are stateless and applied at the subnet level." },
+  { difficulty: 'Intermediate', type: 'long_answer', question: "Explain what AWS CloudFormation is and how it works.", answer: "CloudFormation is an infrastructure-as-code service that lets you model and provision AWS resources using JSON or YAML templates. You define the desired state of resources in a template, and CloudFormation handles creation, updating, and deletion in the correct dependency order via stacks." },
+  { difficulty: 'Intermediate', type: 'coding', question: "Write a Python (boto3) snippet to upload a local file to an S3 bucket.", answer: "import boto3\n\ns3 = boto3.client('s3')\n\ndef upload_file(file_path: str, bucket_name: str, object_key: str) -> None:\n    s3.upload_file(file_path, bucket_name, object_key)\n    print(f'Uploaded {file_path} to s3://{bucket_name}/{object_key}')\n\nupload_file('local_file.txt', 'my-bucket', 'uploads/local_file.txt')" },
+  { difficulty: 'Intermediate', type: 'coding', question: "Write a Python (boto3) snippet to list all objects in an S3 bucket.", answer: "import boto3\n\ns3 = boto3.client('s3')\n\ndef list_objects(bucket_name: str) -> None:\n    response = s3.list_objects_v2(Bucket=bucket_name)\n    for obj in response.get('Contents', []):\n        print(obj['Key'])\n\nlist_objects('my-bucket')" },
+  { difficulty: 'Intermediate', type: 'coding', question: "Write a Python (boto3) snippet to create an SQS queue and send a message to it.", answer: "import boto3\n\nsqs = boto3.client('sqs', region_name='us-east-1')\n\nresponse = sqs.create_queue(QueueName='MyQueue')\nqueue_url = response['QueueUrl']\n\nsqs.send_message(QueueUrl=queue_url, MessageBody='Hello from SQS!')\nprint(f'Message sent to {queue_url}')" },
+  { difficulty: 'Intermediate', type: 'coding', question: "Write a Python (boto3) snippet to retrieve a secret value from AWS Secrets Manager.", answer: "import boto3, json\n\nclient = boto3.client('secretsmanager', region_name='us-east-1')\n\ndef get_secret(secret_name: str) -> dict:\n    response = client.get_secret_value(SecretId=secret_name)\n    return json.loads(response['SecretString'])\n\nsecret = get_secret('my-db-credentials')\nprint(secret)" },
+
+  // ===== ADVANCED =====
+  { difficulty: 'Advanced', type: 'mcq', question: "Which AWS service is used for real-time data streaming?", options: ["SQS", "SNS", "Kinesis", "Glue"], answer: "Kinesis" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is AWS Fargate?", options: ["Serverless container compute engine", "Managed Kubernetes service", "EC2 instance type", "Load balancer type"], answer: "Serverless container compute engine" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is AWS WAF used for?", options: ["Monitoring metrics", "Protecting web apps from common exploits", "Managing IAM roles", "Routing DNS queries"], answer: "Protecting web apps from common exploits" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is the purpose of AWS Transit Gateway?", options: ["Connect multiple VPCs and on-premises networks via a hub", "Send emails", "Monitor API calls", "Deploy containers"], answer: "Connect multiple VPCs and on-premises networks via a hub" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is Amazon Aurora?", options: ["A NoSQL database", "A MySQL/PostgreSQL-compatible high-performance relational database", "A data warehouse", "An in-memory cache"], answer: "A MySQL/PostgreSQL-compatible high-performance relational database" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is AWS Glue used for?", options: ["Container orchestration", "Serverless ETL data preparation", "API management", "DNS routing"], answer: "Serverless ETL data preparation" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is a VPC peering connection?", options: ["Connect two VPCs using private IP routing", "Connect EC2 to S3", "Link two IAM accounts", "Share an RDS instance"], answer: "Connect two VPCs using private IP routing" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What does the AWS Shared Responsibility Model define?", options: ["AWS manages everything", "Customer manages everything", "AWS and customer share security responsibilities", "AWS shares infrastructure with customers"], answer: "AWS and customer share security responsibilities" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is Amazon GuardDuty?", options: ["A firewall service", "A threat detection service using ML", "An IAM auditing tool", "A DDoS protection service"], answer: "A threat detection service using ML" },
+  { difficulty: 'Advanced', type: 'mcq', question: "What is AWS Step Functions?", options: ["A CI/CD pipeline tool", "A serverless workflow orchestration service", "A container scheduling service", "A data streaming tool"], answer: "A serverless workflow orchestration service" },
+  { difficulty: 'Advanced', type: 'true_false', question: "AWS Lambda supports stateful execution across invocations by default.", answer: "False" },
+  { difficulty: 'Advanced', type: 'true_false', question: "Amazon Kinesis Data Streams can retain data for up to 365 days.", answer: "True" },
+  { difficulty: 'Advanced', type: 'true_false', question: "AWS Organizations allows centralized management of multiple AWS accounts.", answer: "True" },
+  { difficulty: 'Advanced', type: 'true_false', question: "VPC peering supports transitive routing between three or more VPCs.", answer: "False" },
+  { difficulty: 'Advanced', type: 'true_false', question: "Service Control Policies (SCPs) can restrict actions even for the root user in member accounts.", answer: "True" },
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is AWS Direct Connect?", answer: "A dedicated private network connection from an on-premises data center to AWS for consistent latency and bandwidth." },
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is AWS Config used for?", answer: "AWS Config tracks the configuration history of AWS resources and evaluates them against desired compliance rules." },
+  { difficulty: 'Advanced', type: 'short_answer', question: "What are Lambda Layers?", answer: "Zip archives containing shared code or libraries that multiple Lambda functions can reference, reducing deployment package size." },
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is the difference between SQS Standard and FIFO queues?", answer: "Standard queues offer higher throughput with best-effort ordering and at-least-once delivery. FIFO queues guarantee strict ordering and exactly-once processing at lower throughput." },
+  { difficulty: 'Advanced', type: 'short_answer', question: "What is horizontal vs vertical scaling in AWS?", answer: "Vertical scaling increases instance size; horizontal scaling adds more instances. AWS favors horizontal scaling via Auto Scaling Groups." },
+  { difficulty: 'Advanced', type: 'long_answer', question: "Explain the AWS Shared Responsibility Model.", answer: "AWS is responsible for security 'of' the cloud — physical hardware, networking, and managed service infrastructure. The customer is responsible for security 'in' the cloud — OS patching, IAM configuration, data encryption, network configuration, and application-level security." },
+  { difficulty: 'Advanced', type: 'long_answer', question: "Explain the difference between SQS Standard and FIFO queues in detail.", answer: "SQS Standard queues provide maximum throughput, best-effort ordering, and at-least-once delivery, meaning messages may occasionally be delivered out of order or duplicated. FIFO queues guarantee that messages are processed exactly once in the exact order they are sent, with a throughput limit of 300 TPS (or 3,000 with batching). FIFO is suited for order-sensitive workflows like financial transactions." },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to launch an EC2 instance with a Name tag.", answer: "import boto3\n\nec2 = boto3.resource('ec2', region_name='us-east-1')\n\ninstance = ec2.create_instances(\n    ImageId='ami-0c55b159cbfafe1f0',\n    MinCount=1,\n    MaxCount=1,\n    InstanceType='t2.micro',\n    KeyName='my-key-pair',\n    TagSpecifications=[{\n        'ResourceType': 'instance',\n        'Tags': [{'Key': 'Name', 'Value': 'MyInstance'}]\n    }]\n)\n\nprint(f'Instance created: {instance[0].id}')" },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to invoke an AWS Lambda function and print its response.", answer: "import boto3, json\n\nclient = boto3.client('lambda', region_name='us-east-1')\n\nresponse = client.invoke(\n    FunctionName='MyLambdaFunction',\n    InvocationType='RequestResponse',\n    Payload=json.dumps({'key': 'value'})\n)\n\nresult = json.loads(response['Payload'].read())\nprint(result)" },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to put an item into a DynamoDB table and retrieve it by its key.", answer: "import boto3\n\ndynamodb = boto3.resource('dynamodb', region_name='us-east-1')\ntable = dynamodb.Table('UsersTable')\n\ntable.put_item(Item={'userId': 'user-001', 'name': 'Raj', 'email': 'raj@example.com'})\n\nresponse = table.get_item(Key={'userId': 'user-001'})\nprint(response.get('Item'))" },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to create a CloudWatch alarm when EC2 CPU utilization exceeds 80%.", answer: "import boto3\n\ncw = boto3.client('cloudwatch', region_name='us-east-1')\n\ncw.put_metric_alarm(\n    AlarmName='HighCPU',\n    MetricName='CPUUtilization',\n    Namespace='AWS/EC2',\n    Statistic='Average',\n    Period=300,\n    EvaluationPeriods=2,\n    Threshold=80.0,\n    ComparisonOperator='GreaterThanThreshold',\n    Dimensions=[{'Name': 'InstanceId', 'Value': 'i-0123456789abcdef0'}],\n    AlarmActions=['arn:aws:sns:us-east-1:123456789012:MyTopic']\n)\n\nprint('Alarm created.')" },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to assume an IAM role and use temporary credentials to list S3 buckets.", answer: "import boto3\n\nsts = boto3.client('sts')\nassumed = sts.assume_role(RoleArn='arn:aws:iam::123456789012:role/MyRole', RoleSessionName='MySession')\ncreds = assumed['Credentials']\n\ns3 = boto3.client(\n    's3',\n    aws_access_key_id=creds['AccessKeyId'],\n    aws_secret_access_key=creds['SecretAccessKey'],\n    aws_session_token=creds['SessionToken']\n)\n\nfor bucket in s3.list_buckets()['Buckets']:\n    print(bucket['Name'])" },
+  { difficulty: 'Advanced', type: 'coding', question: "Write a Python (boto3) snippet to deploy a CloudFormation stack from a local YAML template file.", answer: "import boto3\n\ncf = boto3.client('cloudformation', region_name='us-east-1')\n\nwith open('template.yaml', 'r') as f:\n    template_body = f.read()\n\ncf.create_stack(\n    StackName='MyAppStack',\n    TemplateBody=template_body,\n    Parameters=[{'ParameterKey': 'InstanceType', 'ParameterValue': 't2.micro'}],\n    Capabilities=['CAPABILITY_IAM']\n)\n\nprint('Stack creation initiated.')" },
+
 ];

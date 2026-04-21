@@ -91,7 +91,12 @@ export default function StudentInbox() {
         </div>
       ) : notifications.length === 0 ? (
         <div className="card flex-center" style={{ minHeight: '300px', flexDirection: 'column', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</div>
+          <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', opacity: 0.5 }}>
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </div>
           <h3>Your inbox is empty</h3>
           <p style={{ color: 'var(--text-secondary)' }}>Notifications about your interviews will appear here.</p>
           <Link href="/student/dashboard" style={{ marginTop: '1.5rem' }}>

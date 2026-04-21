@@ -167,51 +167,71 @@ export default function Navigation() {
       const isActive = (path: string) => pathname === path || (path !== '/' && pathname?.startsWith(path));
       navLinks = (
         <>
-          <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>My Interviews</Link>
+          <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>Dashboard</Link>
+          <Link href="/student/interviews" style={{ fontSize: '0.9rem', color: isActive('/student/interviews') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/interviews') ? 700 : 500 }}>My Interviews</Link>
           <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: isActive('/student/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/study-material') ? 700 : 500 }}>Study Material</Link>
           <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/student/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
-          <Link href="/student/inbox" style={{ 
+          <Link href="/student/inbox" title="Notifications" style={{ 
             fontSize: '0.9rem', 
             color: isActive('/student/inbox') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
             fontWeight: isActive('/student/inbox') ? 700 : 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem'
+            position: 'relative',
+            padding: '0.4rem'
           }}>
-            Notifications
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
             {unreadCount > 0 && (
               <span style={{ 
+                position: 'absolute',
+                top: '-4px',
+                right: '-6px',
                 background: 'var(--accent-color)', 
                 color: '#fff', 
-                fontSize: '0.65rem', 
-                padding: '0.1rem 0.4rem', 
-                borderRadius: '10px', 
+                fontSize: '0.6rem', 
+                padding: '1px 4px', 
+                borderRadius: '8px', 
                 fontWeight: 800,
-                animation: 'pulse 2s infinite'
+                minWidth: '14px',
+                textAlign: 'center',
+                animation: 'pulse 2s infinite',
+                boxShadow: '0 0 10px rgba(59, 130, 246, 0.4)'
               }}>
                 {unreadCount}
               </span>
             )}
           </Link>
-          <Link href="/student/messages" style={{ 
+          <Link href="/student/messages" title="Messages" style={{ 
             fontSize: '0.9rem', 
             color: isActive('/student/messages') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
             fontWeight: isActive('/student/messages') ? 700 : 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem'
+            position: 'relative',
+            padding: '0.4rem'
           }}>
-            Messages
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             {unreadMessages > 0 && (
               <span style={{ 
+                position: 'absolute',
+                top: '-4px',
+                right: '-6px',
                 background: '#ef4444', 
                 color: '#fff', 
-                fontSize: '0.65rem', 
-                padding: '0.1rem 0.4rem', 
-                borderRadius: '10px', 
+                fontSize: '0.6rem', 
+                padding: '1px 4px', 
+                borderRadius: '8px', 
                 fontWeight: 800,
+                minWidth: '14px',
+                textAlign: 'center',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
               }}>
                 {unreadMessages}
               </span>
@@ -235,24 +255,33 @@ export default function Navigation() {
           <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: isActive('/admin/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/study-material') ? 700 : 500 }}>Study Material</Link>
           <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
           <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
-          <Link href="/admin/messages" style={{ 
+          <Link href="/admin/messages" title="Messages" style={{ 
             fontSize: '0.9rem', 
             color: isActive('/admin/messages') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
             fontWeight: isActive('/admin/messages') ? 700 : 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem'
+            position: 'relative',
+            padding: '0.4rem'
           }}>
-            Messages
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             {unreadMessages > 0 && (
               <span style={{ 
+                position: 'absolute',
+                top: '-4px',
+                right: '-6px',
                 background: '#ef4444', 
                 color: '#fff', 
-                fontSize: '0.65rem', 
-                padding: '0.1rem 0.4rem', 
-                borderRadius: '10px', 
+                fontSize: '0.6rem', 
+                padding: '1px 4px', 
+                borderRadius: '8px', 
                 fontWeight: 800,
+                minWidth: '14px',
+                textAlign: 'center',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
               }}>
                 {unreadMessages}
               </span>

@@ -285,7 +285,7 @@ export default function ViewInterviewQuestions() {
                   {q.expected_answer && q.question_type !== 'mcq' && (
                     <div style={{ padding: '1rem', background: 'rgba(59,130,246,0.1)', borderRadius: 'var(--border-radius)', border: '1px solid rgba(59,130,246,0.2)' }}>
                       <strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--accent-color)' }}>Expected Answer:</strong>
-                      <pre style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: q.question_type === 'long_answer' ? 'monospace' : 'inherit', fontSize: '0.9rem' }}>
+                      <pre style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontFamily: (q.question_type === 'long_answer' || q.question_type === 'coding') ? 'monospace' : 'inherit', fontSize: '0.9rem' }}>
                         {q.expected_answer}
                       </pre>
                     </div>

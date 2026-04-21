@@ -351,8 +351,12 @@ export default function AdminMessages() {
         background: 'var(--bg-secondary)'
       }}>
         {!selectedStudentId ? (
-          <div className="flex-center" style={{ height: '100%', flexDirection: 'column', opacity: 0.5 }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📫</div>
+          <div className="flex-center" style={{ height: '100%', flexDirection: 'column', opacity: 0.3 }}>
+            <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
             <h3>Select a student to start chatting</h3>
           </div>
         ) : (
