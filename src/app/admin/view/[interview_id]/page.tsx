@@ -11,6 +11,7 @@ const typeBadge: Record<string, { label: string; color: string }> = {
   true_false: { label: 'True / False', color: '#f59e0b' },
   short_answer: { label: 'Short Answer', color: '#3b82f6' },
   long_answer: { label: 'Long Answer', color: '#10b981' },
+  coding: { label: 'Coding Task', color: '#ec4899' },
 };
 
 export default function ViewInterviewQuestions() {
@@ -23,6 +24,15 @@ export default function ViewInterviewQuestions() {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingBatch, setViewingBatch] = useState<any>(null);
+
+  const isCallExpired = (scheduledDate: string, startTime: string, duration: number) => {
+    if (!scheduledDate || !startTime) return false;
+    const [year, month, day] = scheduledDate.split('-').map(Number);
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const scheduledStartTime = new Date(year, month - 1, day, hours, minutes);
+    const scheduledEndTime = new Date(scheduledStartTime.getTime() + (duration || 30) * 60000);
+    return new Date() > scheduledEndTime;
+  };
   const { showToast, showConfirm } = useUI();
 
   const handleRemove = async (assignmentId: string, studentName: string) => {
@@ -210,6 +220,13 @@ export default function ViewInterviewQuestions() {
                                   {a.status.toUpperCase()} →
                                 </span>
                               </Link>
+                            ) : interview.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration) ? (
+                              <span style={{
+                                background: 'var(--danger)',
+                                padding: '0.15rem 0.5rem', borderRadius: '20px', fontSize: '0.7rem', color: '#fff', fontWeight: 600
+                              }}>
+                                MISSED
+                              </span>
                             ) : (
                               <span style={{
                                 background: 'var(--accent-color)',
@@ -218,7 +235,23 @@ export default function ViewInterviewQuestions() {
                                 {a.status.toUpperCase()}
                               </span>
                             )}
-                            {a.status !== 'completed' && (
+                              {interview.mode === 'Live' && a.status !== 'completed' && !isCallExpired(a.scheduled_date, a.start_time, a.duration) && (
+                                <Link href={`/live/${a.id}`}>
+                                  <button style={{ 
+                                    background: 'rgba(16, 185, 129, 0.1)', 
+                                    color: 'var(--success)', 
+                                    padding: '0.3rem 0.6rem', 
+                                    fontSize: '0.8rem', 
+                                    fontWeight: 700,
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                                    cursor: 'pointer'
+                                  }}>
+                                    🎥 Start Call
+                                  </button>
+                                </Link>
+                              )}
+                             {a.status !== 'completed' && (
                               <button 
                                 onClick={() => handleRemove(a.id, a.students?.name)}
                                 title="Remove assignment"
@@ -347,6 +380,13 @@ export default function ViewInterviewQuestions() {
                           {a.status.toUpperCase()} →
                         </span>
                       </Link>
+                    ) : interview.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration) ? (
+                      <span style={{
+                        background: 'var(--danger)',
+                        padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.65rem', color: '#fff', fontWeight: 600
+                      }}>
+                        MISSED
+                      </span>
                     ) : (
                       <>
                         <span style={{
@@ -355,11 +395,29 @@ export default function ViewInterviewQuestions() {
                         }}>
                           {a.status.toUpperCase()}
                         </span>
-                        <button 
-                          onClick={() => {
-                            handleRemove(a.id, a.students?.name);
-                            setViewingBatch(null);
-                          }}
+                        {interview.mode === 'Live' && a.status !== 'completed' && !isCallExpired(a.scheduled_date, a.start_time, a.duration) && (
+                          <Link href={`/live/${a.id}`}>
+                            <button style={{ 
+                              background: 'rgba(16, 185, 129, 0.1)', 
+                              color: 'var(--success)', 
+                              padding: '0.2rem 0.5rem', 
+                              fontSize: '0.7rem', 
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              border: '1px solid rgba(16, 185, 129, 0.2)',
+                              cursor: 'pointer'
+                            }}>
+                              🎥 Start Call
+                            </button>
+                          </Link>
+                        )}
+                      </>
+                    )}
+                    <button 
+                      onClick={() => {
+                        handleRemove(a.id, a.students?.name);
+                        setViewingBatch(null);
+                      }}
                           title="Remove assignment"
                           style={{ 
                             background: 'rgba(239, 68, 68, 0.1)', 
@@ -374,8 +432,6 @@ export default function ViewInterviewQuestions() {
                         >
                           🗑️
                         </button>
-                      </>
-                    )}
                   </div>
                 </div>
               ))}

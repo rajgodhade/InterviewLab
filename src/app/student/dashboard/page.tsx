@@ -163,6 +163,44 @@ export default function StudentDashboardOverview() {
   const [interviewArticles, setInterviewArticles] = useState<any[]>([]);
   const [savedArticles, setSavedArticles] = useState<any[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(true);
+  const [acknowledgedMissed, setAcknowledgedMissed] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('acknowledged_missed_interviews');
+    if (saved) setAcknowledgedMissed(JSON.parse(saved));
+  }, []);
+
+  const handleAcknowledgeMissed = (id: string) => {
+    const updated = [...acknowledgedMissed, id];
+    setAcknowledgedMissed(updated);
+    localStorage.setItem('acknowledged_missed_interviews', JSON.stringify(updated));
+  };
+  
+  const isCallExpired = (scheduledDate: string, startTime: string, duration: number) => {
+    if (!scheduledDate || !startTime) return false;
+    const [year, month, day] = scheduledDate.split('-').map(Number);
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const scheduledStartTime = new Date(year, month - 1, day, hours, minutes);
+    const scheduledEndTime = new Date(scheduledStartTime.getTime() + (duration || 30) * 60000);
+    return new Date() > scheduledEndTime;
+  };
+
+  const shouldShowInPending = (a: any) => {
+    if (a.status !== 'pending') return false;
+    if (acknowledgedMissed.includes(a.id)) return false;
+    if (a.interviews?.mode !== 'Live') return true;
+    
+    const isExpired = isCallExpired(a.scheduled_date, a.start_time, a.duration);
+    if (!isExpired) return true;
+    
+    // For MISSED interviews, only show if they occurred in the last 24 hours
+    const [year, month, day] = a.scheduled_date.split('-').map(Number);
+    const [hours, minutes] = a.start_time.split(':').map(Number);
+    const endTime = new Date(new Date(year, month - 1, day, hours, minutes).getTime() + (a.duration || 30) * 60000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    return endTime > twentyFourHoursAgo;
+  };
 
   useEffect(() => {
     const email = localStorage.getItem('student_email');
@@ -482,6 +520,111 @@ export default function StudentDashboardOverview() {
           </button>
         </div>
       </header>
+      
+      {/* Pending Interviews Section */}
+      {assignments.filter(shouldShowInPending).length > 0 && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div className="flex-between" style={{ marginBottom: '1.25rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>⏳</span> Pending Interviews
+            </h2>
+            <Link href="/student/interviews" style={{ fontSize: '0.85rem', color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 600 }}>
+              View All →
+            </Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+            {assignments.filter(shouldShowInPending).map((a) => (
+              <div key={a.id} className="card" style={{ 
+                background: 'var(--glass-bg)', 
+                border: '1px solid var(--border-color)', 
+                padding: '1.25rem', 
+                borderRadius: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{ 
+                  position: 'absolute', top: 0, right: 0, padding: '0.5rem 1rem', 
+                  background: (a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
+                  color: (a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'var(--danger)' : '#f59e0b', 
+                  fontSize: '0.7rem', fontWeight: 700, borderBottomLeftRadius: '12px' 
+                }}>
+                  {(a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'MISSED' : 'PENDING'}
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{a.interviews?.title}</h3>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span style={{ background: 'var(--bg-accent)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{a.interviews?.technology}</span>
+                    <span>•</span>
+                    <span>{a.duration} Mins</span>
+                  </div>
+                </div>
+                <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <span style={{ opacity: 0.7 }}>📅</span>
+                    <span>{a.scheduled_date}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ opacity: 0.7 }}>⏰</span>
+                    <span>{a.start_time}</span>
+                  </div>
+                </div>
+                {a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration) ? (
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button disabled style={{ 
+                      flex: 1,
+                      background: 'var(--bg-accent)', 
+                      color: 'var(--text-secondary)', 
+                      border: 'none', 
+                      padding: '0.75rem', 
+                      borderRadius: '12px', 
+                      fontWeight: 700, 
+                      fontSize: '0.85rem',
+                      cursor: 'not-allowed'
+                    }}>
+                      Slot Expired
+                    </button>
+                    <button 
+                      onClick={() => handleAcknowledgeMissed(a.id)}
+                      style={{ 
+                        background: 'rgba(59, 130, 246, 0.1)', 
+                        color: 'var(--accent-color)', 
+                        border: '1px solid rgba(59, 130, 246, 0.2)', 
+                        padding: '0.75rem 1.25rem', 
+                        borderRadius: '12px', 
+                        fontWeight: 700, 
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      OK
+                    </button>
+                  </div>
+                ) : (
+                  <Link href={a.interviews?.mode === 'Live' ? `/live/${a.id}` : `/student/interviews/take/${a.id}`} style={{ textDecoration: 'none' }}>
+                    <button style={{ 
+                      width: '100%', 
+                      background: a.interviews?.mode === 'Live' ? 'var(--success-gradient)' : 'var(--accent-gradient)', 
+                      color: '#fff', 
+                      border: 'none', 
+                      padding: '0.75rem', 
+                      borderRadius: '12px', 
+                      fontWeight: 700, 
+                      fontSize: '0.85rem',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)'
+                    }}>
+                      {a.interviews?.mode === 'Live' ? '🎥 Join Live Call' : 'Start Assessment'}
+                    </button>
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>

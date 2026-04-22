@@ -120,8 +120,8 @@ export default function CreateInterview() {
           technology: formData.technology,
           difficulty: formData.difficulty,
           mode: formData.mode,
-          is_offline_mode: formData.is_offline_mode,
-          proctoring_enabled: formData.proctoring_enabled,
+          is_offline_mode: formData.mode === 'Live' ? false : formData.is_offline_mode,
+          proctoring_enabled: formData.mode === 'Live' ? false : formData.proctoring_enabled,
         })
         .select()
         .single();
@@ -131,7 +131,8 @@ export default function CreateInterview() {
       const interviewId = interviewData.id;
 
       // 2. If AI Mode, call our API to generate questions
-      if (formData.mode === 'AI') {
+      if (formData.mode === 'AI' || formData.mode === 'Live') {
+        // For Live mode, we also generate questions to serve as a guide for the interviewer
         const response = await fetch('/api/generate-questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -367,13 +368,32 @@ export default function CreateInterview() {
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Craft your own questions or select from library.</span>
               </div>
             </div>
+
+            <div 
+              onClick={() => setFormData({...formData, mode: 'Live'})}
+              style={{ 
+                padding: '1.5rem', borderRadius: '20px', cursor: 'pointer',
+                background: formData.mode === 'Live' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.02)',
+                border: formData.mode === 'Live' ? '2px solid var(--success)' : '1px solid var(--border-color)',
+                transition: 'all 0.2s ease',
+                display: 'flex', alignItems: 'center', gap: '1rem'
+              }}
+            >
+              <div style={{ fontSize: '2rem', opacity: formData.mode === 'Live' ? 1 : 0.5 }}>🎥</div>
+              <div>
+                <strong style={{ display: 'block', fontSize: '1.1rem' }}>Live Video</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Real-time face-to-face assessment with Jitsi.</span>
+              </div>
+            </div>
           </div>
 
           {formData.mode === 'AI' && (
             <div style={{ 
               marginTop: '1rem', padding: '1.5rem', borderRadius: '16px', background: 'rgba(0,0,0,0.2)', border: '1px dashed var(--border-color)'
             }}>
-              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Number of AI Questions</label>
+              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                Number of AI Questions
+              </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <input 
                   type="range" min="1" max="100" step="1"
@@ -454,68 +474,70 @@ export default function CreateInterview() {
         </div>
 
         {/* Security & Settings Section */}
-        <div className="card" style={{ padding: '2rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-premium)', borderRadius: '24px' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>🛡️</span> Security & Environment
-          </h3>
+        {formData.mode !== 'Live' && (
+          <div className="card" style={{ padding: '2rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-premium)', borderRadius: '24px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>🛡️</span> Security & Environment
+            </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            <div 
-              onClick={() => setFormData({...formData, is_offline_mode: !formData.is_offline_mode})}
-              style={{ 
-                padding: '1.5rem', borderRadius: '20px', cursor: 'pointer',
-                background: formData.is_offline_mode ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.02)',
-                border: formData.is_offline_mode ? '2px solid var(--danger)' : '1px solid var(--border-color)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>🌐</span>
-                <div style={{ 
-                  width: '40px', height: '22px', borderRadius: '20px', position: 'relative',
-                  background: formData.is_offline_mode ? 'var(--danger)' : 'rgba(255,255,255,0.1)',
-                  transition: 'all 0.3s'
-                }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div 
+                onClick={() => setFormData({...formData, is_offline_mode: !formData.is_offline_mode})}
+                style={{ 
+                  padding: '1.5rem', borderRadius: '20px', cursor: 'pointer',
+                  background: formData.is_offline_mode ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.02)',
+                  border: formData.is_offline_mode ? '2px solid var(--danger)' : '1px solid var(--border-color)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🌐</span>
                   <div style={{ 
-                    width: '16px', height: '16px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px',
-                    left: formData.is_offline_mode ? '21px' : '3px', transition: 'all 0.3s'
-                  }}></div>
+                    width: '40px', height: '22px', borderRadius: '20px', position: 'relative',
+                    background: formData.is_offline_mode ? 'var(--danger)' : 'rgba(255,255,255,0.1)',
+                    transition: 'all 0.3s'
+                  }}>
+                    <div style={{ 
+                      width: '16px', height: '16px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px',
+                      left: formData.is_offline_mode ? '21px' : '3px', transition: 'all 0.3s'
+                    }}></div>
+                  </div>
                 </div>
+                <strong style={{ display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Offline Mode</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', display: 'block' }}>Forces students to disconnect from the internet. Prevents online searches.</span>
               </div>
-              <strong style={{ display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>Offline Mode</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', display: 'block' }}>Forces students to disconnect from the internet. Prevents online searches.</span>
-            </div>
 
-            <div 
-              onClick={() => {
-                if (!formData.is_offline_mode) setFormData({...formData, proctoring_enabled: !formData.proctoring_enabled});
-              }}
-              style={{ 
-                padding: '1.5rem', borderRadius: '20px', cursor: formData.is_offline_mode ? 'not-allowed' : 'pointer',
-                background: formData.proctoring_enabled && !formData.is_offline_mode ? 'rgba(139, 92, 246, 0.05)' : 'rgba(255,255,255,0.02)',
-                border: formData.proctoring_enabled && !formData.is_offline_mode ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
-                transition: 'all 0.2s ease',
-                opacity: formData.is_offline_mode ? 0.4 : 1
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>🔒</span>
-                <div style={{ 
-                  width: '40px', height: '22px', borderRadius: '20px', position: 'relative',
-                  background: formData.proctoring_enabled && !formData.is_offline_mode ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
-                  transition: 'all 0.3s'
-                }}>
+              <div 
+                onClick={() => {
+                  if (!formData.is_offline_mode && formData.mode !== 'Live') setFormData({...formData, proctoring_enabled: !formData.proctoring_enabled});
+                }}
+                style={{ 
+                  padding: '1.5rem', borderRadius: '20px', cursor: (formData.is_offline_mode || formData.mode === 'Live') ? 'not-allowed' : 'pointer',
+                  background: formData.proctoring_enabled && !formData.is_offline_mode && formData.mode !== 'Live' ? 'rgba(139, 92, 246, 0.05)' : 'rgba(255,255,255,0.02)',
+                  border: formData.proctoring_enabled && !formData.is_offline_mode && formData.mode !== 'Live' ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  transition: 'all 0.2s ease',
+                  opacity: (formData.is_offline_mode || formData.mode === 'Live') ? 0.4 : 1
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🔒</span>
                   <div style={{ 
-                    width: '16px', height: '16px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px',
-                    left: formData.proctoring_enabled && !formData.is_offline_mode ? '21px' : '3px', transition: 'all 0.3s'
-                  }}></div>
+                    width: '40px', height: '22px', borderRadius: '20px', position: 'relative',
+                    background: formData.proctoring_enabled && !formData.is_offline_mode && formData.mode !== 'Live' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
+                    transition: 'all 0.3s'
+                  }}>
+                    <div style={{ 
+                      width: '16px', height: '16px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px',
+                      left: formData.proctoring_enabled && !formData.is_offline_mode && formData.mode !== 'Live' ? '21px' : '3px', transition: 'all 0.3s'
+                    }}></div>
+                  </div>
                 </div>
+                <strong style={{ display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>AI Proctoring</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', display: 'block' }}>Real-time face detection, tab-switching tracking, and webcam security.</span>
               </div>
-              <strong style={{ display: 'block', fontSize: '1.05rem', marginBottom: '0.25rem' }}>AI Proctoring</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', display: 'block' }}>Real-time face detection, tab-switching tracking, and webcam security.</span>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={{ marginTop: '1rem' }}>
           <button 

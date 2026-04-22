@@ -35,6 +35,9 @@ export default function AssignInterview() {
   const [batches, setBatches] = useState<any[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState('');
 
+  // Booked slots for Live mode
+  const [bookedSlots, setBookedSlots] = useState<any[]>([]);
+
   useEffect(() => {
     fetchData();
   }, [interviewId]);
@@ -61,6 +64,22 @@ export default function AssignInterview() {
     if (studentData) setRegisteredStudents(studentData);
   };
 
+  useEffect(() => {
+    if (interview?.mode === 'Live' && scheduleData.scheduledDate) {
+      fetchBookedSlots();
+    }
+  }, [scheduleData.scheduledDate, interview]);
+
+  const fetchBookedSlots = async () => {
+    const { data } = await supabase
+      .from('interview_assignments')
+      .select('start_time, duration, students(name)')
+      .eq('scheduled_date', scheduleData.scheduledDate)
+      .eq('status', 'pending');
+    
+    if (data) setBookedSlots(data);
+  };
+
   const handleIndividualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -74,7 +93,43 @@ export default function AssignInterview() {
 
     setLoading(true);
     try {
-      // Create assignments for all selected students
+      // 1. Check for slot availability if it's a Live Interview
+      if (interview?.mode === 'Live') {
+        const { data: existingAssignments, error: fetchError } = await supabase
+          .from('interview_assignments')
+          .select('id, start_time, duration')
+          .eq('scheduled_date', scheduleData.scheduledDate)
+          .eq('status', 'pending');
+
+        if (fetchError) throw fetchError;
+
+        if (existingAssignments && existingAssignments.length > 0) {
+          const newStart = timeToMinutes(scheduleData.startTime);
+          const newEnd = newStart + parseInt(scheduleData.duration.toString()) + 10; // 10 min buffer
+
+          for (const existing of existingAssignments) {
+            if (!existing.start_time) continue;
+            const exStart = timeToMinutes(existing.start_time);
+            const exEnd = exStart + (existing.duration || 30) + 10; // 10 min buffer
+
+            // Overlap condition: (StartA < EndB) && (EndA > StartB)
+            if (newStart < exEnd && exStart < newEnd) {
+              showToast(`Time slot conflict! There is already a live interview scheduled at ${existing.start_time}. For live interviews, please allow at least 10 minutes buffer between slots.`, 'error');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        // For Live interviews, we also don't allow assigning multiple students to the same slot at once
+        if (finalStudentIds.length > 1) {
+          showToast('For Live Video interviews, you can only assign one student per slot.', 'warning');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Create assignments for all selected students
       const assignments = finalStudentIds.map(sid => ({
         interview_id: interviewId,
         student_id: sid,
@@ -115,6 +170,13 @@ export default function AssignInterview() {
     
     setLoading(true);
     try {
+      // Slot check for Live Interview batches (usually not recommended, but let's enforce it)
+      if (interview?.mode === 'Live') {
+        showToast('Live Video interviews cannot be assigned to entire batches at once. Please assign students individually to specific slots.', 'error');
+        setLoading(false);
+        return;
+      }
+
       const { data: members, error: membersError } = await supabase
         .from('group_members')
         .select(`student_id, students!inner(is_archived)`)
@@ -164,6 +226,11 @@ export default function AssignInterview() {
     s.email.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
+  const timeToMinutes = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -193,8 +260,21 @@ export default function AssignInterview() {
           Select Students
         </button>
         <button 
-          onClick={() => setAssignType('batch')}
-          style={{ background: 'transparent', color: assignType === 'batch' ? 'var(--accent-color)' : 'var(--text-secondary)', border: 'none', borderBottom: assignType === 'batch' ? '3px solid var(--accent-color)' : '3px solid transparent', padding: '0.75rem 1.5rem', borderRadius: 0, fontWeight: 700, fontSize: '1rem' }}
+          onClick={() => interview?.mode !== 'Live' && setAssignType('batch')}
+          disabled={interview?.mode === 'Live'}
+          style={{ 
+            background: 'transparent', 
+            color: assignType === 'batch' ? 'var(--accent-color)' : 'var(--text-secondary)', 
+            border: 'none', 
+            borderBottom: assignType === 'batch' ? '3px solid var(--accent-color)' : '3px solid transparent', 
+            padding: '0.75rem 1.5rem', 
+            borderRadius: 0, 
+            fontWeight: 700, 
+            fontSize: '1rem',
+            cursor: interview?.mode === 'Live' ? 'not-allowed' : 'pointer',
+            opacity: interview?.mode === 'Live' ? 0.4 : 1
+          }}
+          title={interview?.mode === 'Live' ? 'Batch assignment is not available for Live interviews' : ''}
         >
           Select Batch
         </button>
@@ -284,6 +364,16 @@ export default function AssignInterview() {
                           <div 
                             key={student.id} 
                             onClick={() => {
+                              if (interview?.mode === 'Live') {
+                                // For Live mode, only allow one student
+                                if (selectedStudentIds.includes(student.id)) {
+                                  setSelectedStudentIds([]);
+                                } else {
+                                  setSelectedStudentIds([student.id]);
+                                }
+                                return;
+                              }
+
                               if (selectedStudentIds.includes(student.id)) {
                                 setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
                               } else {
@@ -302,10 +392,10 @@ export default function AssignInterview() {
                             }}
                           >
                             <input 
-                              type="checkbox" 
+                              type={interview?.mode === 'Live' ? 'radio' : 'checkbox'} 
                               checked={selectedStudentIds.includes(student.id)} 
                               onChange={() => {}} // Controlled by div click
-                              style={{ width: '18px', height: '18px' }}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
                             <div style={{ flex: 1 }}>
                               <div style={{ fontWeight: 600 }}>{student.name}</div>
@@ -344,6 +434,29 @@ export default function AssignInterview() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Duration (minutes)</label>
                 <input required type="number" min="5" max="180" value={scheduleData.duration} onChange={(e) => setScheduleData({...scheduleData, duration: parseInt(e.target.value)})} />
               </div>
+
+              {interview?.mode === 'Live' && scheduleData.scheduledDate && bookedSlots.length > 0 && (
+                <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '12px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--warning)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>⚠️</span> Booked Slots for {scheduleData.scheduledDate}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {bookedSlots.map((slot, i) => {
+                      const start = timeToMinutes(slot.start_time);
+                      const endWithBuffer = start + (slot.duration || 30) + 10;
+                      return (
+                        <div key={i} style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <strong>{slot.start_time}</strong> - {Math.floor(endWithBuffer/60)}:{(endWithBuffer%60).toString().padStart(2, '0')} 
+                          <span style={{ opacity: 0.6, marginLeft: '0.4rem' }}>({slot.students?.name})</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                    * Slots include a 10-minute buffer after the interview ends.
+                  </p>
+                </div>
+              )}
             </div>
 
             <button type="submit" disabled={loading} style={{ background: 'var(--accent-gradient)', padding: '1rem', fontSize: '1.1rem', fontWeight: 700, marginTop: '1rem' }}>

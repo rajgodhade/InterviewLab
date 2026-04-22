@@ -5,7 +5,7 @@ CREATE TABLE interviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   technology TEXT NOT NULL,
-  mode TEXT NOT NULL CHECK (mode IN ('AI', 'Custom')),
+  mode TEXT NOT NULL CHECK (mode IN ('AI', 'Custom', 'Live')),
   difficulty TEXT NOT NULL CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
   is_archived BOOLEAN DEFAULT false,
   is_offline_mode BOOLEAN DEFAULT false,
@@ -21,7 +21,7 @@ CREATE TABLE questions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   interview_id UUID REFERENCES interviews(id) ON DELETE CASCADE,
   question_text TEXT NOT NULL,
-  question_type TEXT NOT NULL DEFAULT 'short_answer' CHECK (question_type IN ('mcq', 'true_false', 'short_answer', 'long_answer')),
+  question_type TEXT NOT NULL DEFAULT 'short_answer' CHECK (question_type IN ('mcq', 'true_false', 'short_answer', 'long_answer', 'coding')),
   options JSONB, -- for MCQ: ["Option A", "Option B", "Option C", "Option D"]
   expected_answer TEXT,
   order_index INTEGER DEFAULT 0

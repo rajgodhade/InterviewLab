@@ -14,6 +14,16 @@ export default function StudentDashboard() {
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
+
+  const isCallExpired = (scheduledDate: string, startTime: string, duration: number) => {
+    if (!scheduledDate || !startTime) return false;
+    const [year, month, day] = scheduledDate.split('-').map(Number);
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const scheduledStartTime = new Date(year, month - 1, day, hours, minutes);
+    const scheduledEndTime = new Date(scheduledStartTime.getTime() + (duration || 30) * 60000);
+    return new Date() > scheduledEndTime;
+  };
 
   useEffect(() => {
     const email = localStorage.getItem('student_email');
@@ -131,7 +141,25 @@ export default function StudentDashboard() {
   const filteredAssignments = assignments.filter(a => 
     a.interviews?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     a.interviews?.technology.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (sortBy === 'newest') {
+      const dateA = new Date(a.scheduled_date || 0).getTime();
+      const dateB = new Date(b.scheduled_date || 0).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      // If same date, sort by start time
+      return (b.start_time || '').localeCompare(a.start_time || '');
+    }
+    if (sortBy === 'oldest') {
+      const dateA = new Date(a.scheduled_date || 0).getTime();
+      const dateB = new Date(b.scheduled_date || 0).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return (a.start_time || '').localeCompare(b.start_time || '');
+    }
+    if (sortBy === 'title') {
+      return (a.interviews?.title || '').localeCompare(b.interviews?.title || '');
+    }
+    return 0;
+  });
 
   if (!studentInfo && !loading) return null;
 
@@ -169,6 +197,27 @@ export default function StudentDashboard() {
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginLeft: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-accent)', padding: '0.4rem 0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Sort:</span>
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value as any)}
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-primary)', 
+                fontSize: '0.85rem', 
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="newest" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Recent First</option>
+              <option value="oldest" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Oldest First</option>
+              <option value="title" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Title (A-Z)</option>
+            </select>
+          </div>
+
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginRight: '1rem' }}>
             Showing <strong>{filteredAssignments.length}</strong> interviews
           </div>
@@ -257,12 +306,12 @@ export default function StudentDashboard() {
 
                 <div className="flex-between" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '10px' }}>
                   <span style={{ 
-                    background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-                    color: isCompleted ? 'var(--success)' : assignment.interviews?.is_archived ? '#f59e0b' : 'var(--accent-color)',
+                    background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'rgba(239, 68, 68, 0.1)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                    color: isCompleted ? 'var(--success)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'var(--danger)' : assignment.interviews?.is_archived ? '#f59e0b' : 'var(--accent-color)',
                     padding: '0.25rem 0.6rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
-                    border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                    border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'rgba(239, 68, 68, 0.2)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
                   }}>
-                    {isCompleted ? assignment.status : (assignment.interviews?.is_archived ? 'archived' : assignment.status)}
+                    {isCompleted ? assignment.status : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'missed slot' : (assignment.interviews?.is_archived ? 'archived' : assignment.status)}
                   </span>
                   {isCompleted && (
                     <span style={{ color: isPass ? 'var(--success)' : 'var(--danger)', fontWeight: 800, fontSize: '0.75rem' }}>
@@ -276,9 +325,19 @@ export default function StudentDashboard() {
                     assignment.interviews?.is_archived ? (
                       <button disabled style={{ width: '100%', background: 'var(--bg-accent)', color: 'var(--text-secondary)', cursor: 'not-allowed' }}>Archived</button>
                     ) : (
-                      <Link href={`/interview/${assignment.id}`}>
-                        <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
-                      </Link>
+                      assignment.interviews?.mode === 'Live' ? (
+                        isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration) ? (
+                          <button disabled style={{ width: '100%', background: 'var(--bg-accent)', color: 'var(--text-secondary)', cursor: 'not-allowed' }}>Slot Expired</button>
+                        ) : (
+                          <Link href={`/live/${assignment.id}`}>
+                            <button style={{ width: '100%', background: 'var(--success-gradient, linear-gradient(135deg, #10b981 0%, #059669 100%))', color: '#fff', fontWeight: 700 }}>🎥 Join Live Call</button>
+                          </Link>
+                        )
+                      ) : (
+                        <Link href={`/interview/${assignment.id}`}>
+                          <button style={{ width: '100%', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
+                        </Link>
+                      )
                     )
                   ) : (
                     <Link href={`/student/results/${assignment.id}`}>
@@ -345,12 +404,12 @@ export default function StudentDashboard() {
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
                         <span style={{ 
-                          background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-                          color: isCompleted ? 'var(--success)' : assignment.interviews?.is_archived ? '#f59e0b' : 'var(--accent-color)',
+                          background: isCompleted ? 'rgba(16, 185, 129, 0.1)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'rgba(239, 68, 68, 0.1)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                          color: isCompleted ? 'var(--success)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'var(--danger)' : assignment.interviews?.is_archived ? '#f59e0b' : 'var(--accent-color)',
                           padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
-                          border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                          border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'rgba(239, 68, 68, 0.2)' : assignment.interviews?.is_archived ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
                         }}>
-                          {isCompleted ? assignment.status : (assignment.interviews?.is_archived ? 'archived' : assignment.status)}
+                          {isCompleted ? assignment.status : (assignment.interviews?.mode === 'Live' && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration)) ? 'missed slot' : (assignment.interviews?.is_archived ? 'archived' : assignment.status)}
                         </span>
                       </td>
                       <td style={{ padding: '1.25rem 1.5rem' }}>
@@ -377,9 +436,19 @@ export default function StudentDashboard() {
                           assignment.interviews?.is_archived ? (
                             <button disabled style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}>Archived</button>
                           ) : (
-                            <Link href={`/interview/${assignment.id}`}>
-                              <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
-                            </Link>
+                            assignment.interviews?.mode === 'Live' ? (
+                              isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration) ? (
+                                <button disabled style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}>Slot Expired</button>
+                              ) : (
+                                <Link href={`/live/${assignment.id}`}>
+                                  <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--success-gradient, linear-gradient(135deg, #10b981 0%, #059669 100%))', color: '#fff', fontWeight: 700 }}>🎥 Join Call</button>
+                                </Link>
+                              )
+                            ) : (
+                              <Link href={`/interview/${assignment.id}`}>
+                                <button style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Attempt Interview</button>
+                              </Link>
+                            )
                           )
                         ) : (
                           <Link href={`/student/results/${assignment.id}`}>

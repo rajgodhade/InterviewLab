@@ -550,66 +550,84 @@ export default function AdminDashboard() {
 
                 {/* Actions Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
-                    <button style={{ 
-                      width: '100%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', 
-                      border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.8rem', 
-                      fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                    >
-                      Manage Assignments
-                    </button>
-                  </Link>
+                  {interview.mode === 'Live' ? (
+                    <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
+                      <button style={{ 
+                        width: '100%', background: 'var(--success-gradient, linear-gradient(135deg, #10b981 0%, #059669 100%))', color: '#fff', 
+                        border: 'none', borderRadius: '12px', padding: '0.8rem', 
+                        fontSize: '0.85rem', fontWeight: 700, transition: '0.2s',
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.4)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'; }}
+                      >
+                        🎥 Manage & Start Live Calls
+                      </button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
+                        <button style={{ 
+                          width: '100%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', 
+                          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.8rem', 
+                          fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                        >
+                          Manage Assignments
+                        </button>
+                      </Link>
 
-                  <Link href={`/admin/questions/${interview.id}`} style={{ gridColumn: 'span 2' }}>
-                    <button style={{ 
-                      width: '100%', background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent-color)', 
-                      border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '12px', padding: '0.8rem', 
-                      fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; }}
-                    >
-                      ✏️ Edit Questions
-                    </button>
-                  </Link>
-                  
-                  <Link href={`/admin/live/${interview.id}`}>
-                    <button style={{ 
-                      width: '100%', height: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
-                      background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)',
-                      color: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'var(--text-secondary)',
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: '0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)'; }}
-                    >
-                      <span style={{ 
-                        width: '8px', height: '8px', background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'currentColor', 
-                        borderRadius: '50%', animation: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'pulse-live 1.5s infinite' : 'none', opacity: 0.6
-                      }}></span>
-                      {interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length > 0 ? (
-                        <span>Monitor Live ({interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length})</span>
-                      ) : (
-                        <span>Live Monitor</span>
-                      )}
-                    </button>
-                  </Link>
+                      <Link href={`/admin/questions/${interview.id}`} style={{ gridColumn: 'span 2' }}>
+                        <button style={{ 
+                          width: '100%', background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent-color)', 
+                          border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '12px', padding: '0.8rem', 
+                          fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; }}
+                        >
+                          ✏️ Edit Questions
+                        </button>
+                      </Link>
+                      
+                      <Link href={`/admin/live/${interview.id}`}>
+                        <button style={{ 
+                          width: '100%', height: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
+                          background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)',
+                          color: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'var(--text-secondary)',
+                          border: '1px solid rgba(255,255,255,0.05)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: '0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)'; }}
+                        >
+                          <span style={{ 
+                            width: '8px', height: '8px', background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'currentColor', 
+                            borderRadius: '50%', animation: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'pulse-live 1.5s infinite' : 'none', opacity: 0.6
+                          }}></span>
+                          {interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length > 0 ? (
+                            <span>Monitor Live ({interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length})</span>
+                          ) : (
+                            <span>Live Monitor</span>
+                          )}
+                        </button>
+                      </Link>
 
-                  <Link href={`/admin/results/${interview.id}`}>
-                    <button style={{ 
-                      width: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
-                      background: 'var(--accent-gradient)', color: '#fff', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', transition: '0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.4)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'; }}
-                    >
-                      View Results
-                    </button>
-                  </Link>
+                      <Link href={`/admin/results/${interview.id}`}>
+                        <button style={{ 
+                          width: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
+                          background: 'var(--accent-gradient)', color: '#fff', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', transition: '0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.4)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'; }}
+                        >
+                          View Results
+                        </button>
+                      </Link>
+                    </>
+                  )}
                 </div>
 
               </div>
@@ -668,14 +686,14 @@ export default function AdminDashboard() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Link href={`/admin/live/${interview.id}`}>
+                  <Link href={interview.mode === 'Live' ? `/admin/view/${interview.id}` : `/admin/live/${interview.id}`}>
                     <button style={{ 
                       padding: '0.6rem 1rem', fontSize: '0.85rem', 
-                      background: interview.interview_assignments?.some((a: any) => a.is_live) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', 
-                      color: interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)', 
-                      border: interview.interview_assignments?.some((a: any) => a.is_live) ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(244, 63, 94, 0.1)' 
+                      background: interview.mode === 'Live' ? 'rgba(16, 185, 129, 0.1)' : (interview.interview_assignments?.some((a: any) => a.is_live) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)'), 
+                      color: interview.mode === 'Live' ? 'var(--success)' : (interview.interview_assignments?.some((a: any) => a.is_live) ? 'var(--success)' : 'var(--danger)'), 
+                      border: interview.mode === 'Live' ? '1px solid rgba(16, 185, 129, 0.1)' : (interview.interview_assignments?.some((a: any) => a.is_live) ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(244, 63, 94, 0.1)') 
                     }}>
-                      Monitor
+                      {interview.mode === 'Live' ? '🎥 Manage Call' : 'Monitor'}
                     </button>
                   </Link>
                   <Link href={`/admin/view/${interview.id}`}>
