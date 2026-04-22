@@ -109,9 +109,18 @@ export default function ViewInterviewQuestions() {
       </button>
 
       <h2 style={{ marginBottom: '0.5rem' }}>{interview.title}</h2>
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <p style={{ color: 'var(--text-secondary)' }}>{interview.technology} • {interview.difficulty}</p>
         <span style={{ background: 'var(--bg-accent)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>{interview.mode} Mode</span>
+        <Link href={`/admin/questions/${interviewId}`}>
+          <button style={{ 
+            background: 'transparent', color: 'var(--accent-color)', 
+            border: '1px solid var(--accent-color)', padding: '0.3rem 0.75rem', 
+            fontSize: '0.8rem', borderRadius: '8px' 
+          }}>
+            ✏️ Manage Questions
+          </button>
+        </Link>
       </div>
 
       {/* 12-col grid: 4 left (Students) | 8 right (Questions) */}

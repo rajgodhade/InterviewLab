@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
@@ -18,6 +18,9 @@ export default function CreateInterview() {
     is_offline_mode: false,
     proctoring_enabled: true,
   });
+
+  const [csvQuestions, setCsvQuestions] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const popularTech = [
@@ -45,6 +48,64 @@ export default function CreateInterview() {
     { name: 'DevOps', icon: '♾️' },
     { name: 'C++', icon: '🔵' },
   ];
+
+  const downloadSampleCSV = () => {
+    const headers = ['question_text', 'question_type', 'options', 'expected_answer'];
+    const rows = [
+      ['"What is React?"', 'mcq', '"Option A | Option B | Option C | Option D"', '"Option A"'],
+      ['"Is JavaScript single-threaded?"', 'true_false', '', 'True'],
+      ['"Explain closures in JS."', 'short_answer', '', '"Closures allow functions to access outer scope..."']
+    ];
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'interview_questions_sample.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const questions: any[] = [];
+
+      // Skip header row
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Simple CSV parsing (handling quoted values)
+        const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(p => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length < 2) continue;
+
+        const [qText, qType, optionsStr, expected] = parts;
+        const options = optionsStr ? optionsStr.split('|').map(o => o.trim()) : null;
+
+        questions.push({
+          question_text: qText,
+          question_type: qType || 'short_answer',
+          options: options,
+          expected_answer: expected
+        });
+      }
+
+      if (questions.length === 0) {
+        showToast('No valid questions found in CSV', 'error');
+      } else {
+        setCsvQuestions(questions);
+        showToast(`Parsed ${questions.length} questions from CSV`, 'success');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +152,26 @@ export default function CreateInterview() {
       showToast('Interview created successfully!', 'success');
       
       if (formData.mode === 'Custom') {
+        // If we have CSV questions, insert them
+        if (csvQuestions.length > 0) {
+          const { error: questionsError } = await supabase
+            .from('questions')
+            .insert(csvQuestions.map((q, index) => ({
+              interview_id: interviewId,
+              question_text: q.question_text,
+              question_type: q.question_type,
+              options: q.options,
+              expected_answer: q.expected_answer,
+              order_index: index
+            })));
+
+          if (questionsError) {
+            console.error('Error inserting CSV questions:', questionsError);
+            showToast('Interview created, but failed to import questions.', 'warning');
+          } else {
+            showToast(`Imported ${csvQuestions.length} questions successfully!`, 'success');
+          }
+        }
         router.push(`/admin/questions/${interviewId}`);
       } else {
         router.push('/admin');
@@ -304,6 +385,70 @@ export default function CreateInterview() {
                   {formData.numQuestions}
                 </span>
               </div>
+            </div>
+          )}
+
+          {formData.mode === 'Custom' && (
+            <div style={{ 
+              marginTop: '1.5rem', padding: '1.5rem', borderRadius: '16px', 
+              background: 'rgba(0,0,0,0.2)', border: '1px dashed var(--border-color)',
+              display: 'flex', flexDirection: 'column', gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '1rem', marginBottom: '0.25rem' }}>Bulk Upload Questions</strong>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Upload a CSV file to import questions in bulk.</span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={downloadSampleCSV}
+                  style={{ background: 'transparent', color: 'var(--accent-color)', fontSize: '0.8rem', border: '1px solid var(--accent-color)', padding: '0.4rem 0.8rem', borderRadius: '8px', cursor: 'pointer' }}
+                >
+                  📥 Sample CSV
+                </button>
+              </div>
+
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                style={{ 
+                  padding: '1.5rem', border: '2px dashed rgba(255,255,255,0.1)', 
+                  borderRadius: '12px', textAlign: 'center', cursor: 'pointer',
+                  transition: 'all 0.2s', background: csvQuestions.length > 0 ? 'rgba(52, 211, 153, 0.05)' : 'transparent'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+              >
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleCSVUpload} 
+                  accept=".csv" 
+                  style={{ display: 'none' }} 
+                />
+                {csvQuestions.length > 0 ? (
+                  <div>
+                    <span style={{ fontSize: '1.5rem' }}>✅</span>
+                    <p style={{ margin: '0.5rem 0 0 0', fontWeight: 700, color: '#34d399' }}>{csvQuestions.length} Questions Loaded</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Click to replace file</p>
+                  </div>
+                ) : (
+                  <div>
+                    <span style={{ fontSize: '1.5rem' }}>📄</span>
+                    <p style={{ margin: '0.5rem 0 0 0', fontWeight: 600 }}>Click to upload CSV</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Standard format: text, type, options, answer</p>
+                  </div>
+                )}
+              </div>
+              
+              {csvQuestions.length > 0 && (
+                <button 
+                  type="button"
+                  onClick={() => setCsvQuestions([])}
+                  style={{ background: 'transparent', color: 'var(--danger)', fontSize: '0.75rem', border: 'none', alignSelf: 'center', cursor: 'pointer' }}
+                >
+                  Clear uploaded questions
+                </button>
+              )}
             </div>
           )}
         </div>

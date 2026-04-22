@@ -562,6 +562,19 @@ export default function AdminDashboard() {
                       Manage Assignments
                     </button>
                   </Link>
+
+                  <Link href={`/admin/questions/${interview.id}`} style={{ gridColumn: 'span 2' }}>
+                    <button style={{ 
+                      width: '100%', background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent-color)', 
+                      border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '12px', padding: '0.8rem', 
+                      fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; }}
+                    >
+                      ✏️ Edit Questions
+                    </button>
+                  </Link>
                   
                   <Link href={`/admin/live/${interview.id}`}>
                     <button style={{ 
@@ -666,7 +679,10 @@ export default function AdminDashboard() {
                     </button>
                   </Link>
                   <Link href={`/admin/view/${interview.id}`}>
-                    <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-primary)' }}>Manage</button>
+                    <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'var(--bg-accent)', color: 'var(--text-primary)' }} title="Manage Assignments">Assignments</button>
+                  </Link>
+                  <Link href={`/admin/questions/${interview.id}`}>
+                    <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)' }}>Questions</button>
                   </Link>
                   <Link href={`/admin/results/${interview.id}`}>
                     <button style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', background: 'var(--accent-gradient)' }}>Results</button>
