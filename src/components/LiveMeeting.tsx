@@ -20,7 +20,7 @@ export default function LiveMeeting({ roomName, userName, onLeave }: LiveMeeting
     document.body.appendChild(script);
 
     script.onload = () => {
-      const domain = 'meet.ffmuc.net';
+      const domain = 'meet.jit.si';
       const options = {
         roomName: `InterviewLab-${roomName}`,
         width: '100%',
