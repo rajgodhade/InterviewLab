@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import LiveMeeting from '@/components/LiveMeeting';
 import Link from 'next/link';
 
@@ -20,10 +20,11 @@ export default function LiveInterviewPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const supabase = createClient();
 
-        // 1. Check if user is Admin
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        // 1. Check if user is Admin — use getUser() (validates against server, not stale cache)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
           setUserRole('admin');
           setUserName('Interviewer (Admin)');
         } else {
@@ -51,8 +52,8 @@ export default function LiveInterviewPage() {
         setAssignment(data);
 
         // If student, update name with their real name if we didn't have it
-        if (!userName && data.students?.name) {
-          setUserName(data.students.name);
+        if (data.students?.name) {
+          setUserName((prev) => prev || data.students.name);
         }
 
       } catch (err) {

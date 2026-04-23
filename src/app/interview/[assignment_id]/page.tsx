@@ -2,16 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import dynamic from 'next/dynamic';
+import { createClient } from '@/utils/supabase/client';
 import { useUI } from '@/components/UIProvider';
-import CodeEditor from '@/components/CodeEditor';
-import ProctoringSystem from '@/components/ProctoringSystem';
+
+// Lazy-load heavy components — TensorFlow (~1.1MB) and Monaco (~400KB)
+const CodeEditor = dynamic(() => import('@/components/CodeEditor'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '2rem', color: 'var(--text-secondary)', textAlign: 'center', background: '#1e1e1e', borderRadius: '8px', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Code Editor...</div>,
+});
+const ProctoringSystem = dynamic(() => import('@/components/ProctoringSystem'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function InterviewSession() {
   const router = useRouter();
   const { showToast, showConfirm } = useUI();
   const params = useParams();
   const assignmentId = params.assignment_id as string;
+  const supabase = createClient();
 
   const [assignment, setAssignment] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);

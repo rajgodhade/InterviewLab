@@ -125,20 +125,22 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // 1. Fetch Interviews and assignments
-      const { data: intData, error: intError } = await supabase
-        .from('interviews')
-        .select('*, interview_assignments(status, is_live)')
-        .order('created_at', { ascending: false });
+      // Run queries in parallel to reduce waterfall loading
+      const [
+        { data: intData, error: intError },
+        { count: studentCount },
+        { count: batchCount }
+      ] = await Promise.all([
+        supabase
+          .from('interviews')
+          .select('*, interview_assignments(status, is_live)')
+          .order('created_at', { ascending: false }),
+        supabase.from('students').select('*', { count: 'exact', head: true }),
+        supabase.from('groups').select('*', { count: 'exact', head: true })
+      ]);
       
       if (intError) throw intError;
       setInterviews(intData || []);
-
-      // 2. Fetch Student Count
-      const { count: studentCount } = await supabase.from('students').select('*', { count: 'exact', head: true });
-      
-      // 3. Fetch Batch Count
-      const { count: batchCount } = await supabase.from('groups').select('*', { count: 'exact', head: true });
 
       // 4. Calculate status stats from interviews data
       let completed = 0;

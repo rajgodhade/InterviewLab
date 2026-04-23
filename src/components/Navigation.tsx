@@ -13,6 +13,7 @@ export default function Navigation() {
   const [isStudent, setIsStudent] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [studentId, setStudentId] = useState<string | null>(null);
 
   // Close menu when route changes
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function Navigation() {
 
     window.addEventListener('storage', checkStudent);
     return () => window.removeEventListener('storage', checkStudent);
-  }, [pathname]);
+  }, []);
 
   // Hide admin menus on student/interview routes
   const isStudentRoute = pathname?.startsWith('/student') || pathname?.startsWith('/interview');
@@ -55,69 +56,80 @@ export default function Navigation() {
 
   // Fetch unread notifications and messages for students
   useEffect(() => {
-    if (isStudentRoute && isStudent) {
-      const email = localStorage.getItem('student_email');
-      if (email) {
-        fetchUnreadCount(email);
-        fetchUnreadMessages(email);
-        
-        // Setup Realtime Subscription for notifications
-        const notifChannel = supabase
-          .channel('nav-notifications')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'notifications' },
-            () => fetchUnreadCount(email)
-          )
-          .subscribe();
+    if (!isStudent) return;
+    
+    let active = true;
+    const email = localStorage.getItem('student_email');
+    if (!email) return;
 
-        // Setup Realtime Subscription for messages
-        const msgChannel = supabase
-          .channel('nav-messages')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'messages' },
-            () => fetchUnreadMessages(email)
-          )
-          .subscribe();
+    const initStudentData = async () => {
+      try {
+        const { data: student } = await supabase.from('students').select('id').eq('email', email).single();
+        if (!student || !active) return;
+        setStudentId(student.id);
 
-        return () => {
-          supabase.removeChannel(notifChannel);
-          supabase.removeChannel(msgChannel);
-        };
+        fetchUnreadCount(student.id);
+        fetchUnreadMessages(student.id);
+      } catch (err) {
+        console.error('Error fetching student ID:', err);
       }
-    }
-  }, [isStudentRoute, isStudent, pathname]);
+    };
+
+    initStudentData();
+
+    // Setup Realtime Subscription for notifications
+    const notifChannel = supabase
+      .channel('nav-notifications')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => { if (studentId) fetchUnreadCount(studentId); }
+      )
+      .subscribe();
+
+    // Setup Realtime Subscription for messages
+    const msgChannel = supabase
+      .channel('nav-messages')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => { if (studentId) fetchUnreadMessages(studentId); }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(notifChannel);
+      supabase.removeChannel(msgChannel);
+    };
+  }, [isStudent, studentId]);
 
   // Fetch unread messages for admins
   useEffect(() => {
-    if (isAdmin || isAdminRoute) {
-      fetchAdminUnreadMessages();
-      
-      const channel = supabase
-        .channel('admin-nav-messages')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'messages' },
-          () => fetchAdminUnreadMessages()
-        )
-        .subscribe();
+    if (!isAdmin && !isAdminRoute) return;
+    
+    fetchAdminUnreadMessages();
+    
+    const channel = supabase
+      .channel('admin-nav-messages')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => fetchAdminUnreadMessages()
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [isAdmin, isAdminRoute, pathname]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, isAdminRoute]);
 
-  const fetchUnreadCount = async (email: string) => {
+  const fetchUnreadCount = async (sid: string) => {
     try {
-      const { data: student } = await supabase.from('students').select('id').eq('email', email).single();
-      if (!student) return;
-
       const { count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
-        .eq('student_id', student.id)
+        .eq('student_id', sid)
         .eq('is_read', false);
 
       setUnreadCount(count || 0);
@@ -126,15 +138,12 @@ export default function Navigation() {
     }
   };
 
-  const fetchUnreadMessages = async (email: string) => {
+  const fetchUnreadMessages = async (sid: string) => {
     try {
-      const { data: student } = await supabase.from('students').select('id').eq('email', email).single();
-      if (!student) return;
-
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .eq('student_id', student.id)
+        .eq('student_id', sid)
         .eq('sender_role', 'admin')
         .eq('is_read', false);
 
