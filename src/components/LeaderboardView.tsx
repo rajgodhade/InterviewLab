@@ -48,20 +48,35 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('interview_assignments')
-        .select(`
-          final_score,
-          max_score,
-          group_id,
-          students (id, name, photo_url),
-          interviews (technology)
-        `)
-        .eq('status', 'completed')
-        .not('final_score', 'is', null);
-
-      if (selectedBatch !== 'all') {
-        query = query.eq('group_id', selectedBatch);
+      let query;
+      
+      if (selectedBatch === 'all') {
+        query = supabase
+          .from('interview_assignments')
+          .select(`
+            final_score,
+            max_score,
+            students (id, name, photo_url),
+            interviews (technology)
+          `)
+          .eq('status', 'completed')
+          .not('final_score', 'is', null);
+      } else {
+        // Filter by student group membership (not just explicit group_id on assignment)
+        query = supabase
+          .from('interview_assignments')
+          .select(`
+            final_score,
+            max_score,
+            students!inner (
+              id, name, photo_url,
+              group_members!inner (group_id)
+            ),
+            interviews (technology)
+          `)
+          .eq('status', 'completed')
+          .not('final_score', 'is', null)
+          .eq('students.group_members.group_id', selectedBatch);
       }
 
       const { data, error } = await query;
@@ -123,7 +138,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
         
         <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1.5rem', position: 'relative' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 900, background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 style={{ margin: 0, fontSize: '1.85rem', fontWeight: 900, background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {isAdmin ? 'Performance Hub' : 'The Arena'}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
@@ -165,7 +180,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
         </div>
       ) : entries.length === 0 ? (
         <div className="card flex-center" style={{ minHeight: '300px', flexDirection: 'column', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)' }}>
-          <span style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🏆</span>
+          <span className="material-icons-round" style={{ fontSize: '4rem', marginBottom: '1.5rem', color: 'var(--text-secondary)', opacity: 0.5 }}>leaderboard</span>
           <h3>The board is empty</h3>
           <p style={{ color: 'var(--text-secondary)' }}>No interviews found for the current filters.</p>
         </div>
@@ -324,8 +339,8 @@ function PodiumCard({ entry, rank, height, color, delay }: { entry: LeaderboardE
         zIndex: 1
       }}>
         {isFirst && (
-          <div style={{ position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%) rotate(-5deg)', fontSize: '2.5rem', zIndex: 10 }}>
-            👑
+          <div style={{ position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%) rotate(-5deg)', color: color, fontSize: '2.5rem', zIndex: 10 }}>
+            <span className="material-icons-round" style={{ fontSize: '3rem' }}>workspace_premium</span>
           </div>
         )}
         

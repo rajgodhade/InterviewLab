@@ -184,7 +184,7 @@ export default function AssignStudyMaterial() {
     <div className="container" style={{ maxWidth: '1450px' }}>
       <div className="flex-between" style={{ alignItems: 'flex-start', marginBottom: '2.5rem' }}>
         <div>
-          <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Access Control</h1>
+          <h1 style={{ fontSize: '1.85rem', marginBottom: '0.5rem' }}>Access Control</h1>
           {material && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                <span style={{ 

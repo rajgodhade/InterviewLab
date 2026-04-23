@@ -228,7 +228,7 @@ export default function CreateInterview() {
       </button>
 
       <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <h1 style={{ fontSize: '1.85rem', fontWeight: 800, marginBottom: '0.5rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Create New Interview
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Configure your assessment parameters and AI proctoring security.</p>

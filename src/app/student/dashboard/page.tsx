@@ -25,7 +25,7 @@ const StatCard = ({ title, value, icon, trend, color }: any) => (
     transition: 'transform 0.3s ease'
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: '1.5rem' }}>{icon}</span>
+      <span className="material-icons-round" style={{ fontSize: '1.75rem', color: color || 'var(--accent-color)' }}>{icon}</span>
       {trend && (
         <span style={{ 
           fontSize: '0.75rem', 
@@ -526,100 +526,153 @@ export default function StudentDashboardOverview() {
         <div style={{ marginBottom: '2.5rem' }}>
           <div className="flex-between" style={{ marginBottom: '1.25rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>⏳</span> Pending Interviews
+              <span className="material-icons-round" style={{ color: 'var(--accent-color)' }}>schedule</span> Pending Interviews
             </h2>
             <Link href="/student/interviews" style={{ fontSize: '0.85rem', color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 600 }}>
               View All →
             </Link>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
             {assignments.filter(shouldShowInPending).map((a) => (
               <div key={a.id} className="card" style={{ 
                 background: 'var(--glass-bg)', 
                 border: '1px solid var(--border-color)', 
-                padding: '1.25rem', 
-                borderRadius: '20px',
+                padding: '1.5rem', 
+                borderRadius: '24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
-                transition: 'all 0.3s ease',
+                gap: '1.25rem',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
-                overflow: 'hidden'
-              }}>
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-color)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+              >
                 <div style={{ 
-                  position: 'absolute', top: 0, right: 0, padding: '0.5rem 1rem', 
-                  background: (a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
+                  position: 'absolute', top: 0, right: 0, padding: '0.6rem 1.2rem', 
+                  background: (a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)', 
                   color: (a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'var(--danger)' : '#f59e0b', 
-                  fontSize: '0.7rem', fontWeight: 700, borderBottomLeftRadius: '12px' 
+                  fontSize: '0.75rem', fontWeight: 800, borderBottomLeftRadius: '16px',
+                  letterSpacing: '0.05em'
                 }}>
                   {(a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration)) ? 'MISSED' : 'PENDING'}
                 </div>
-                <div>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{a.interviews?.title}</h3>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    <span style={{ background: 'var(--bg-accent)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{a.interviews?.technology}</span>
-                    <span>•</span>
-                    <span>{a.duration} Mins</span>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <span style={{ 
+                    width: 'fit-content',
+                    fontSize: '0.7rem', 
+                    background: 'var(--bg-accent)', 
+                    color: 'var(--accent-color)',
+                    padding: '0.25rem 0.75rem', 
+                    borderRadius: '20px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}>
+                    {a.interviews?.technology}
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{a.interviews?.title}</h3>
+                </div>
+
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr 1fr', 
+                  gap: '1rem',
+                  padding: '1rem', 
+                  background: 'rgba(255,255,255,0.03)', 
+                  borderRadius: '16px', 
+                  fontSize: '0.85rem',
+                  border: '1px solid rgba(255,255,255,0.02)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span className="material-icons-round" style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }}>event</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Date</span>
+                      <span style={{ fontWeight: 600 }}>{a.scheduled_date}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span className="material-icons-round" style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }}>schedule</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Time</span>
+                      <span style={{ fontWeight: 600 }}>{a.start_time}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', gridColumn: 'span 2', marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                    <span className="material-icons-round" style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }}>timer</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Duration:</span>
+                      <span style={{ fontWeight: 600 }}>{a.duration} Minutes</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', fontSize: '0.85rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <span style={{ opacity: 0.7 }}>📅</span>
-                    <span>{a.scheduled_date}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ opacity: 0.7 }}>⏰</span>
-                    <span>{a.start_time}</span>
-                  </div>
-                </div>
-                {a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration) ? (
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button disabled style={{ 
-                      flex: 1,
-                      background: 'var(--bg-accent)', 
-                      color: 'var(--text-secondary)', 
-                      border: 'none', 
-                      padding: '0.75rem', 
-                      borderRadius: '12px', 
-                      fontWeight: 700, 
-                      fontSize: '0.85rem',
-                      cursor: 'not-allowed'
-                    }}>
-                      Slot Expired
-                    </button>
-                    <button 
-                      onClick={() => handleAcknowledgeMissed(a.id)}
-                      style={{ 
-                        background: 'rgba(59, 130, 246, 0.1)', 
-                        color: 'var(--accent-color)', 
-                        border: '1px solid rgba(59, 130, 246, 0.2)', 
-                        padding: '0.75rem 1.25rem', 
-                        borderRadius: '12px', 
+
+                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+                  {a.interviews?.mode === 'Live' && isCallExpired(a.scheduled_date, a.start_time, a.duration) ? (
+                    <div style={{ display: 'flex', gap: '0.75rem', width: '100%' }}>
+                      <button disabled style={{ 
+                        flex: 1,
+                        background: 'var(--bg-accent)', 
+                        color: 'var(--text-secondary)', 
+                        border: 'none', 
+                        padding: '0.85rem', 
+                        borderRadius: '14px', 
                         fontWeight: 700, 
                         fontSize: '0.85rem',
-                        cursor: 'pointer'
+                        cursor: 'not-allowed',
+                        opacity: 0.7
+                      }}>
+                        Slot Expired
+                      </button>
+                      <button 
+                        onClick={() => handleAcknowledgeMissed(a.id)}
+                        style={{ 
+                          background: 'rgba(59, 130, 246, 0.1)', 
+                          color: 'var(--accent-color)', 
+                          border: '1px solid rgba(59, 130, 246, 0.2)', 
+                          padding: '0.85rem 1.5rem', 
+                          borderRadius: '14px', 
+                          fontWeight: 700, 
+                          fontSize: '0.85rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        OK
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => router.push(a.interviews?.mode === 'Live' ? `/live/${a.id}` : `/interview/${a.id}`)}
+                      style={{ 
+                        width: 'fit-content',
+                        minWidth: '160px',
+                        background: a.interviews?.mode === 'Live' ? 'var(--success-gradient)' : 'var(--accent-gradient)', 
+                        color: '#fff', 
+                        border: 'none', 
+                        padding: '0.85rem 1.5rem', 
+                        borderRadius: '14px', 
+                        fontWeight: 700, 
+                        fontSize: '0.9rem',
+                        boxShadow: a.interviews?.mode === 'Live' ? '0 6px 15px rgba(16, 185, 129, 0.25)' : '0 6px 15px rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.6rem',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      OK
+                      {a.interviews?.mode === 'Live' ? (
+                        <><span className="material-icons-round">videocam</span> Join Live Call</>
+                      ) : (
+                        <>Start Assessment <span className="material-icons-round">arrow_forward</span></>
+                      )}
                     </button>
-                  </div>
-                ) : (
-                  <Link href={a.interviews?.mode === 'Live' ? `/live/${a.id}` : `/student/interviews/take/${a.id}`} style={{ textDecoration: 'none' }}>
-                    <button style={{ 
-                      width: '100%', 
-                      background: a.interviews?.mode === 'Live' ? 'var(--success-gradient)' : 'var(--accent-gradient)', 
-                      color: '#fff', 
-                      border: 'none', 
-                      padding: '0.75rem', 
-                      borderRadius: '12px', 
-                      fontWeight: 700, 
-                      fontSize: '0.85rem',
-                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)'
-                    }}>
-                      {a.interviews?.mode === 'Live' ? '🎥 Join Live Call' : 'Start Assessment'}
-                    </button>
-                  </Link>
-                )}
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -628,10 +681,10 @@ export default function StudentDashboardOverview() {
 
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <StatCard title="Total Interviews" value={stats.totalInterviews} icon="📋" color="#3b82f6" />
-        <StatCard title="Average Score" value={`${stats.avgScore}%`} icon="🎯" color="#10b981" />
-        <StatCard title="Pending Tasks" value={stats.pendingInterviews} icon="⏳" color="#f59e0b" />
-        <StatCard title="Resources" value={stats.studyMaterials} icon="📚" color="#8b5cf6" />
+        <StatCard title="Total Interviews" value={stats.totalInterviews} icon="assignment" color="#3b82f6" />
+        <StatCard title="Average Score" value={`${stats.avgScore}%`} icon="track_changes" color="#10b981" />
+        <StatCard title="Pending Tasks" value={stats.pendingInterviews} icon="history_toggle_off" color="#f59e0b" />
+        <StatCard title="Resources" value={stats.studyMaterials} icon="auto_stories" color="#8b5cf6" />
       </div>
 
       {/* Main Charts Section */}
@@ -725,7 +778,7 @@ export default function StudentDashboardOverview() {
           }}>
             <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span>📚</span> Reading List
+                <span className="material-icons-round" style={{ color: 'var(--accent-color)' }}>bookmark_added</span> Reading List
               </h2>
               <button 
                 onClick={() => { if(confirm('Clear all saved articles?')) { setSavedArticles([]); localStorage.removeItem('saved_tech_articles'); } }}
@@ -764,7 +817,7 @@ export default function StudentDashboardOverview() {
           <div style={{ marginBottom: '3rem' }}>
             <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span>🎯</span> Recommended for You
+                <span className="material-icons-round" style={{ color: 'var(--accent-color)' }}>auto_awesome</span> Recommended for You
               </h2>
             </div>
             
@@ -792,7 +845,7 @@ export default function StudentDashboardOverview() {
           <div>
             <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span>💼</span> Career Mastery
+                <span className="material-icons-round" style={{ color: 'var(--accent-color)' }}>work</span> Career Mastery
               </h2>
               <a href="https://dev.to" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 600 }}>
                 Dev.to
