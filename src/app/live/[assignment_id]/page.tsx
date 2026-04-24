@@ -16,32 +16,34 @@ export default function LiveInterviewPage() {
   const [userRole, setUserRole] = useState<'admin' | 'student' | null>(null);
   const [userName, setUserName] = useState('');
 
+  // Admin Evaluation State
+  const [showEvaluation, setShowEvaluation] = useState(false);
+  const [passStatus, setPassStatus] = useState<'pass' | 'fail' | null>(null);
+  const [adminFeedback, setAdminFeedback] = useState('');
+  const [evaluating, setEvaluating] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const supabase = createClient();
 
-        // 1. Check if user is Admin — use getUser() (validates against server, not stale cache)
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserRole('admin');
           setUserName('Interviewer (Admin)');
         } else {
-          // 2. Check if user is Student
           const studentEmail = localStorage.getItem('student_email');
           const studentName = localStorage.getItem('student_name');
           if (studentEmail) {
             setUserRole('student');
             setUserName(studentName || 'Student');
           } else {
-            // No auth, redirect to login
             router.push('/login');
             return;
           }
         }
 
-        // 3. Fetch Assignment Details
         const { data, error } = await supabase
           .from('interview_assignments')
           .select('*, interviews(*), students(*)')
@@ -51,7 +53,6 @@ export default function LiveInterviewPage() {
         if (error) throw error;
         setAssignment(data);
 
-        // If student, update name with their real name if we didn't have it
         if (data.students?.name) {
           setUserName((prev) => prev || data.students.name);
         }
@@ -73,6 +74,42 @@ export default function LiveInterviewPage() {
     const scheduledStartTime = new Date(year, month - 1, day, hours, minutes);
     const scheduledEndTime = new Date(scheduledStartTime.getTime() + (duration || 30) * 60000);
     return new Date() > scheduledEndTime;
+  };
+
+  const handleEndCall = () => {
+    if (userRole === 'admin') {
+      setShowEvaluation(true);
+    } else {
+      // For student, ending the call completes their side
+      completeStudentSession();
+    }
+  };
+
+  const completeStudentSession = async () => {
+    const supabase = createClient();
+    // Don't mark completed yet, wait for Admin to do it, just set is_live = false
+    await supabase.from('interview_assignments').update({ is_live: false }).eq('id', assignmentId);
+    router.push(`/student/results/${assignmentId}`);
+  };
+
+  const submitAdminEvaluation = async () => {
+    if (!passStatus) return;
+    setEvaluating(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('interview_assignments').update({
+        status: 'completed',
+        pass_status: passStatus,
+        admin_feedback: adminFeedback,
+        is_live: false
+      }).eq('id', assignmentId);
+      
+      router.push(`/admin/view/${assignment.interview_id}`);
+    } catch (err) {
+      console.error('Failed to submit evaluation', err);
+      alert('Failed to save evaluation.');
+      setEvaluating(false);
+    }
   };
 
   const isExpired = assignment && isCallExpired(assignment.scheduled_date, assignment.start_time, assignment.duration);
@@ -98,7 +135,6 @@ export default function LiveInterviewPage() {
     );
   }
 
-  // Block students if expired
   if (userRole === 'student' && isExpired) {
     return (
       <div className="container flex-center" style={{ minHeight: '80vh' }}>
@@ -116,6 +152,68 @@ export default function LiveInterviewPage() {
           >
             Return to Dashboard
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showEvaluation && userRole === 'admin') {
+    return (
+      <div className="container flex-center" style={{ minHeight: '80vh' }}>
+        <div className="card" style={{ padding: '3rem', maxWidth: '600px', width: '100%' }}>
+          <h2 style={{ marginBottom: '0.5rem' }}>Evaluate Candidate</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
+            The meeting has ended. Please provide the final result for <strong>{assignment.students?.name}</strong>.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <button 
+              onClick={() => setPassStatus('pass')}
+              style={{ 
+                flex: 1, padding: '1.5rem', fontSize: '1.2rem', fontWeight: 'bold',
+                background: passStatus === 'pass' ? 'var(--success)' : 'rgba(16, 185, 129, 0.1)',
+                color: passStatus === 'pass' ? '#fff' : 'var(--success)',
+                border: passStatus === 'pass' ? '2px solid var(--success)' : '2px solid transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              ✅ PASS
+            </button>
+            <button 
+              onClick={() => setPassStatus('fail')}
+              style={{ 
+                flex: 1, padding: '1.5rem', fontSize: '1.2rem', fontWeight: 'bold',
+                background: passStatus === 'fail' ? 'var(--danger)' : 'rgba(239, 68, 68, 0.1)',
+                color: passStatus === 'fail' ? '#fff' : 'var(--danger)',
+                border: passStatus === 'fail' ? '2px solid var(--danger)' : '2px solid transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              ❌ FAIL
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label>Interviewer Feedback (Visible to Student)</label>
+            <textarea 
+              value={adminFeedback}
+              onChange={(e) => setAdminFeedback(e.target.value)}
+              placeholder="Provide constructive feedback on the candidate's performance..."
+              rows={4}
+              style={{ width: '100%' }}
+            ></textarea>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+            <button onClick={() => setShowEvaluation(false)} style={{ flex: 1, background: 'var(--bg-accent)' }}>Cancel</button>
+            <button 
+              onClick={submitAdminEvaluation} 
+              disabled={!passStatus || evaluating}
+              style={{ flex: 2, background: 'var(--accent-gradient)' }}
+            >
+              {evaluating ? 'Saving...' : 'Submit Evaluation & Complete'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -155,13 +253,7 @@ export default function LiveInterviewPage() {
             LIVE SESSION
           </span>
           <button 
-            onClick={() => {
-              if (userRole === 'admin') {
-                router.push(`/admin/view/${assignment.interview_id}`);
-              } else {
-                router.push('/student/interviews');
-              }
-            }}
+            onClick={handleEndCall}
             style={{ 
               background: 'rgba(239, 68, 68, 0.1)', 
               color: 'var(--danger)', 
@@ -172,7 +264,7 @@ export default function LiveInterviewPage() {
               fontWeight: 700
             }}
           >
-            Leave Call
+            End Call
           </button>
         </div>
       </header>
@@ -181,18 +273,12 @@ export default function LiveInterviewPage() {
         <LiveMeeting 
           roomName={assignmentId} 
           userName={userName} 
-          onLeave={() => {
-            if (userRole === 'admin') {
-              router.push(`/admin/view/${assignment.interview_id}`);
-            } else {
-              router.push('/student/interviews');
-            }
-          }} 
+          onLeave={handleEndCall} 
         />
       </main>
 
       <footer style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-        <p>Tip: Ensure your camera and microphone are enabled. Stay in this tab until the interview is complete.</p>
+        <p>Tip: When you are finished with the interview, click "End Call" to proceed.</p>
       </footer>
     </div>
   );

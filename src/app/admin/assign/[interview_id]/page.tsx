@@ -432,7 +432,17 @@ export default function AssignInterview() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Duration (minutes)</label>
-                <input required type="number" min="5" max="180" value={scheduleData.duration} onChange={(e) => setScheduleData({...scheduleData, duration: parseInt(e.target.value)})} />
+                <input 
+                  required 
+                  type="number" 
+                  min="5" 
+                  max="180" 
+                  value={scheduleData.duration || ''} 
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                    setScheduleData({...scheduleData, duration: val as any});
+                  }} 
+                />
               </div>
 
               {interview?.mode === 'Live' && scheduleData.scheduledDate && bookedSlots.length > 0 && (

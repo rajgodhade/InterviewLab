@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LiveMeetingProps {
   roomName: string;
@@ -9,91 +9,133 @@ interface LiveMeetingProps {
 }
 
 export default function LiveMeeting({ roomName, userName, onLeave }: LiveMeetingProps) {
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const jitsiApiRef = useRef<any>(null);
+  const [meetingWindow, setMeetingWindow] = useState<Window | null>(null);
+  const [isMeetingActive, setIsMeetingActive] = useState(false);
+  const [durationTracker, setDurationTracker] = useState(0);
 
+  // Clean up and tracking
   useEffect(() => {
-    // Load Jitsi script
-    const script = document.createElement('script');
-    script.src = 'https://meet.jit.si/external_api.js';
-    script.async = true;
-    document.body.appendChild(script);
+    let checkInterval: NodeJS.Timeout;
+    
+    if (meetingWindow && isMeetingActive) {
+      checkInterval = setInterval(() => {
+        // Track duration (approximate)
+        setDurationTracker(prev => prev + 1);
 
-    script.onload = () => {
-      const domain = 'meet.jit.si';
-      const options = {
-        roomName: `InterviewLab-${roomName}`,
-        width: '100%',
-        height: '100%',
-        parentNode: jitsiContainerRef.current,
-        userInfo: {
-          displayName: userName,
-        },
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          disableDeepLinking: true,
-          prejoinPageEnabled: true,
-          enableWelcomePage: false,
-        },
-        interfaceConfigOverwrite: {
-          INITIAL_TOOLBAR_TIMEOUT: 20000,
-          TOOLBAR_BUTTONS: [
-            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'settings', 'raisehand',
-            'videoquality', 'filmstrip', 'tileview', 'videobackgroundblur', 'help', 'mute-everyone',
-            'security'
-          ],
-        },
-      };
-
-      const jitsiApi = new (window as any).JitsiMeetExternalAPI(domain, options);
-      jitsiApiRef.current = jitsiApi;
-
-      jitsiApi.addEventListeners({
-        readyToClose: () => {
-          if (onLeave) onLeave();
-        },
-        videoConferenceLeft: () => {
-          if (onLeave) onLeave();
+        // Check if user closed the window
+        if (meetingWindow.closed) {
+          setIsMeetingActive(false);
+          setMeetingWindow(null);
+          clearInterval(checkInterval);
         }
-      });
-    };
+      }, 1000);
+    }
 
     return () => {
-      if (jitsiApiRef.current) {
-        try {
-          jitsiApiRef.current.executeCommand('hangup');
-          jitsiApiRef.current.dispose();
-        } catch (e) {
-          console.error('Error disposing Jitsi:', e);
-        }
-      }
-      // Aggressive track stopping to ensure camera turns off
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => track.stop());
-          }).catch(() => {});
-      }
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      if (checkInterval) clearInterval(checkInterval);
     };
-  }, [roomName, userName]);
+  }, [meetingWindow, isMeetingActive]);
+
+  const startMeeting = () => {
+    const domain = 'meet.jit.si';
+    const room = `InterviewLab-${roomName}`;
+    const url = `https://${domain}/${room}#userInfo.displayName="${encodeURIComponent(userName)}"&config.prejoinPageEnabled=true`;
+    
+    // Open in a new popup window
+    const width = 1024;
+    const height = 768;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    
+    const popup = window.open(url, 'InterviewLab_LiveMeeting', `width=${width},height=${height},left=${left},top=${top}`);
+    
+    if (popup) {
+      setMeetingWindow(popup);
+      setIsMeetingActive(true);
+    } else {
+      alert("Please allow popups to open the meeting window.");
+    }
+  };
+
+  const endMeeting = () => {
+    if (meetingWindow && !meetingWindow.closed) {
+      meetingWindow.close();
+    }
+    setIsMeetingActive(false);
+    setMeetingWindow(null);
+    if (onLeave) onLeave();
+  };
+
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   return (
-    <div 
-      ref={jitsiContainerRef} 
-      style={{ 
-        width: '100%', 
-        height: 'calc(100vh - 100px)', 
-        borderRadius: '24px', 
-        overflow: 'hidden',
-        border: '1px solid var(--glass-border)',
-        boxShadow: 'var(--shadow-premium)',
-        background: '#000'
-      }} 
-    />
+    <div style={{ 
+      width: '100%', 
+      height: 'calc(100vh - 200px)', 
+      borderRadius: '24px', 
+      border: '1px solid var(--glass-border)',
+      boxShadow: 'var(--shadow-premium)',
+      background: 'var(--glass-bg)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem',
+      textAlign: 'center'
+    }}>
+      <div style={{
+        background: isMeetingActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+        padding: '3rem',
+        borderRadius: '24px',
+        border: isMeetingActive ? '2px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)',
+        maxWidth: '500px'
+      }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+          {isMeetingActive ? '📹' : '🎥'}
+        </div>
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+          {isMeetingActive ? 'Meeting in Progress' : 'Live Video Meeting'}
+        </h3>
+        
+        {isMeetingActive ? (
+          <>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
+              Your meeting is currently open in a separate window to ensure the highest quality and prevent timeouts.
+            </p>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--success)', marginBottom: '2rem' }}>
+              {formatDuration(durationTracker)}
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => {
+                  if (meetingWindow && !meetingWindow.closed) {
+                    meetingWindow.focus();
+                  }
+                }}
+                style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)' }}
+              >
+                Focus Window
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
+              Click the button below to launch your secure video session. The meeting will open in a new window.
+            </p>
+            <button 
+              onClick={startMeeting}
+              style={{ background: 'var(--accent-gradient)', padding: '1rem 2rem', fontSize: '1.1rem', width: '100%' }}
+            >
+              Launch Meeting Window
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

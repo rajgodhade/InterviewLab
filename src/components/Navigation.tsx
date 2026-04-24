@@ -179,6 +179,7 @@ export default function Navigation() {
           <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>Dashboard</Link>
           <Link href="/student/interviews" style={{ fontSize: '0.9rem', color: isActive('/student/interviews') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/interviews') ? 700 : 500 }}>My Interviews</Link>
           <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: isActive('/student/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/study-material') ? 700 : 500 }}>Study Material</Link>
+          <Link href="/student/analytics" style={{ fontSize: '0.9rem', color: isActive('/student/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/analytics') ? 700 : 500 }}>Analytics</Link>
           <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/student/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
           <Link href="/student/inbox" title="Notifications" style={{ 
             fontSize: '0.9rem', 
@@ -258,6 +259,7 @@ export default function Navigation() {
           <Link href="/admin/students" style={{ fontSize: '0.9rem', color: isActive('/admin/students') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/students') ? 700 : 500 }}>Students</Link>
           <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: isActive('/admin/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/study-material') ? 700 : 500 }}>Study Material</Link>
           <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
+          <Link href="/admin/analytics" style={{ fontSize: '0.9rem', color: isActive('/admin/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/analytics') ? 700 : 500 }}>Analytics</Link>
           <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
           <Link href="/admin/messages" title="Messages" style={{ 
             fontSize: '0.9rem', 

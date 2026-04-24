@@ -170,8 +170,11 @@ export default function InterviewResults() {
                 type="number" 
                 min="0" 
                 max={totalQuestions} 
-                value={passingMark} 
-                onChange={(e) => setPassingMark(Number(e.target.value))}
+                value={passingMark || 0} 
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  setPassingMark(isNaN(val) ? 0 : val);
+                }}
                 style={{ width: '60px', padding: '0.25rem', textAlign: 'center' }}
               />
               <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>/ {totalQuestions}</span>
