@@ -140,10 +140,21 @@ export default function Navigation() {
 
   const fetchUnreadMessages = async (sid: string) => {
     try {
-      const { count } = await supabase
+      // Get groups for this student to include group messages in unread count
+      const { data: groups } = await supabase.from('group_members').select('group_id').eq('student_id', sid);
+      const groupIds = groups?.map(g => g.group_id) || [];
+
+      let query = supabase
         .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('student_id', sid)
+        .select('*', { count: 'exact', head: true });
+
+      if (groupIds.length > 0) {
+        query = query.or(`student_id.eq.${sid},group_id.in.(${groupIds.join(',')})`);
+      } else {
+        query = query.eq('student_id', sid);
+      }
+
+      const { count } = await query
         .eq('sender_role', 'admin')
         .eq('is_read', false);
 

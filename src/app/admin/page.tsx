@@ -24,6 +24,10 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     // Close menu when clicking anywhere else
@@ -31,6 +35,11 @@ export default function AdminDashboard() {
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Reset to page 1 when filters or tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterDifficulty, activeTab]);
 
   useEffect(() => {
     // Realtime subscription for interview assignments to track live room status
@@ -250,6 +259,13 @@ export default function AdminDashboard() {
     return matchesTab && matchesSearch && matchesDifficulty;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredInterviews.length / itemsPerPage);
+  const paginatedInterviews = filteredInterviews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (loading) return <div className="container"><p>Loading interviews...</p></div>;
 
   return (
@@ -420,7 +436,7 @@ export default function AdminDashboard() {
             )}
           </div>
         ) : (
-          filteredInterviews.map((interview) => (
+          paginatedInterviews.map((interview) => (
             viewMode === 'grid' ? (
               <div 
                 key={interview.id} 
@@ -428,14 +444,14 @@ export default function AdminDashboard() {
                 style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: '1.5rem', 
+                  gap: '1.25rem', 
                   position: 'relative', 
-                  padding: '2rem',
+                  padding: '1.5rem',
                   background: 'var(--glass-bg)',
                   backdropFilter: 'blur(15px)',
                   border: '1px solid var(--glass-border)',
                   boxShadow: 'var(--shadow-premium)',
-                  borderRadius: '24px',
+                  borderRadius: '20px',
                   overflow: 'hidden',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
@@ -516,119 +532,141 @@ export default function AdminDashboard() {
                   opacity: 0.6
                 }}></div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>{interview.title}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '1.2rem' }}>{getTechIcons(interview.technology)[0] || '💻'}</span>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>{interview.technology}</span>
-                    </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                    {interview.is_offline_mode && (
+                      <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', fontSize: '0.55rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Offline</span>
+                    )}
+                    <span style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', fontSize: '0.55rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{interview.difficulty}</span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '0.5rem', marginRight: '2rem' }}>
-                    {interview.is_offline_mode && (
-                      <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', fontSize: '0.65rem', fontWeight: 800, padding: '0.25rem 0.5rem', borderRadius: '6px', textTransform: 'uppercase' }}>Offline</span>
-                    )}
-                    <span style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', fontSize: '0.65rem', fontWeight: 800, padding: '0.25rem 0.5rem', borderRadius: '6px', textTransform: 'uppercase' }}>{interview.difficulty}</span>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#fff', paddingRight: '2rem', lineHeight: 1.2 }}>{interview.title}</h3>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}>{getTechIcons(interview.technology)[0] || '💻'}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{interview.technology}</span>
                   </div>
                 </div>
 
                 {/* Metrics Visualization */}
                 <div style={{ 
-                  display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)'
+                  display: 'flex', gap: '0.75rem', background: 'rgba(0,0,0,0.25)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)'
                 }}>
                   <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{interview.interview_assignments?.length || 0}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem' }}>Assigned</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{interview.interview_assignments?.length || 0}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '0.3rem' }}>Assigned</div>
                   </div>
                   <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
                   <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--success)', lineHeight: 1 }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--success)', lineHeight: 1 }}>
                       {interview.interview_assignments?.filter((a: any) => a.status === 'completed').length || 0}
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem' }}>Completed</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '0.3rem' }}>Completed</div>
                   </div>
                 </div>
 
                 {/* Actions Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
                   {interview.mode === 'Live' ? (
                     <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
                       <button style={{ 
                         width: '100%', background: 'var(--success-gradient, linear-gradient(135deg, #10b981 0%, #059669 100%))', color: '#fff', 
-                        border: 'none', borderRadius: '12px', padding: '0.8rem', 
-                        fontSize: '0.85rem', fontWeight: 700, transition: '0.2s',
-                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                        border: 'none', borderRadius: '10px', padding: '0.7rem', 
+                        fontSize: '0.8rem', fontWeight: 700, transition: '0.2s',
+                        boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.4)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 15px rgba(16, 185, 129, 0.3)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(16, 185, 129, 0.2)'; }}
                       >
-                        🎥 Manage & Start Live Calls
+                        🎥 Manage Live Calls
                       </button>
                     </Link>
                   ) : (
-                    <>
-                      <Link href={`/admin/view/${interview.id}`} style={{ gridColumn: 'span 2' }}>
-                        <button style={{ 
-                          width: '100%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', 
-                          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.8rem', 
-                          fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                        >
-                          Manage Assignments
-                        </button>
-                      </Link>
+                <div style={{ 
+                  display: 'flex', 
+                  background: 'rgba(255,255,255,0.03)', 
+                  borderRadius: '12px', 
+                  padding: '0.4rem',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  marginTop: '0.5rem',
+                  width: '100%',
+                  gap: '0.4rem'
+                }}>
+                  <Link href={`/admin/view/${interview.id}`} style={{ flex: 1.2 }}>
+                    <button style={{ 
+                      width: '100%', background: 'transparent', color: 'var(--text-secondary)', 
+                      border: 'none', padding: '0.6rem 0.4rem', borderRadius: '8px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                      transition: '0.2s', cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'; e.currentTarget.style.color = 'var(--accent-color)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      <span className="material-icons-round" style={{ fontSize: '1.1rem' }}>group</span>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'capitalize' }}>Assign</span>
+                    </button>
+                  </Link>
 
-                      <Link href={`/admin/questions/${interview.id}`} style={{ gridColumn: 'span 2' }}>
-                        <button style={{ 
-                          width: '100%', background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent-color)', 
-                          border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '12px', padding: '0.8rem', 
-                          fontSize: '0.85rem', fontWeight: 600, transition: '0.2s'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; }}
-                        >
-                          ✏️ Edit Questions
-                        </button>
-                      </Link>
-                      
-                      <Link href={`/admin/live/${interview.id}`}>
-                        <button style={{ 
-                          width: '100%', height: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
-                          background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)',
-                          color: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'var(--text-secondary)',
-                          border: '1px solid rgba(255,255,255,0.05)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: '0.2s'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.05)'; }}
-                        >
+                  <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)', margin: '0.4rem 0' }}></div>
+
+                  <Link href={`/admin/questions/${interview.id}`} style={{ flex: 1 }}>
+                    <button style={{ 
+                      width: '100%', background: 'transparent', color: 'var(--text-secondary)', 
+                      border: 'none', padding: '0.6rem 0.4rem', borderRadius: '8px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                      transition: '0.2s', cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'; e.currentTarget.style.color = 'var(--accent-color)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      <span className="material-icons-round" style={{ fontSize: '1.1rem' }}>edit</span>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'capitalize' }}>Edit</span>
+                    </button>
+                  </Link>
+
+                  <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)', margin: '0.4rem 0' }}></div>
+
+                  <Link href={`/admin/live/${interview.id}`} style={{ flex: 1.2 }}>
+                    <button style={{ 
+                      width: '100%', background: 'transparent', color: 'var(--text-secondary)', 
+                      border: 'none', padding: '0.6rem 0.4rem', borderRadius: '8px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                      transition: '0.2s', cursor: 'pointer', position: 'relative'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)'; e.currentTarget.style.color = 'var(--success)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <span className="material-icons-round" style={{ fontSize: '1.1rem' }}>sensors</span>
+                        {interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') && (
                           <span style={{ 
-                            width: '8px', height: '8px', background: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'var(--success)' : 'currentColor', 
-                            borderRadius: '50%', animation: interview.interview_assignments?.some((a: any) => a.is_live && a.status !== 'completed') ? 'pulse-live 1.5s infinite' : 'none', opacity: 0.6
+                            position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', 
+                            background: 'var(--success)', borderRadius: '50%', border: '1px solid var(--bg-secondary)',
+                            animation: 'pulse-live 1.5s infinite'
                           }}></span>
-                          {interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length > 0 ? (
-                            <span>Monitor Live ({interview.interview_assignments?.filter((a: any) => a.is_live && a.status !== 'completed').length})</span>
-                          ) : (
-                            <span>Live Monitor</span>
-                          )}
-                        </button>
-                      </Link>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'capitalize' }}>Live</span>
+                    </button>
+                  </Link>
 
-                      <Link href={`/admin/results/${interview.id}`}>
-                        <button style={{ 
-                          width: '100%', borderRadius: '12px', padding: '0.8rem', fontSize: '0.85rem', fontWeight: 700,
-                          background: 'var(--accent-gradient)', color: '#fff', border: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', transition: '0.2s'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.4)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'; }}
-                        >
-                          View Results
-                        </button>
-                      </Link>
-                    </>
+                  <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)', margin: '0.4rem 0' }}></div>
+
+                  <Link href={`/admin/results/${interview.id}`} style={{ flex: 1.2 }}>
+                    <button style={{ 
+                      width: '100%', background: 'transparent', color: 'var(--text-secondary)', 
+                      border: 'none', padding: '0.6rem 0.4rem', borderRadius: '8px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                      transition: '0.2s', cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      <span className="material-icons-round" style={{ fontSize: '1.1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>analytics</span>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'capitalize' }}>Stats</span>
+                    </button>
+                  </Link>
+                </div>
                   )}
                 </div>
 
@@ -739,6 +777,64 @@ export default function AdminDashboard() {
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{ 
+          display: 'flex', justifyContent: 'center', alignItems: 'center', 
+          gap: '0.75rem', marginTop: '3rem', padding: '1rem',
+          animation: 'fadeIn 0.5s ease'
+        }}>
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            style={{ 
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)', 
+              border: '1px solid var(--border-color)', borderRadius: '10px', 
+              padding: '0.6rem 1rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1, transition: '0.2s',
+              display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}
+          >
+            <span className="material-icons-round" style={{ fontSize: '1.2rem' }}>chevron_left</span>
+            Prev
+          </button>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                style={{ 
+                  width: '40px', height: '40px', borderRadius: '10px',
+                  background: currentPage === page ? 'var(--accent-gradient)' : 'var(--bg-secondary)',
+                  color: currentPage === page ? '#fff' : 'var(--text-secondary)',
+                  border: '1px solid var(--border-color)', fontWeight: 700,
+                  cursor: 'pointer', transition: '0.2s',
+                  boxShadow: currentPage === page ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                }}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button 
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            style={{ 
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)', 
+              border: '1px solid var(--border-color)', borderRadius: '10px', 
+              padding: '0.6rem 1rem', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1, transition: '0.2s',
+              display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}
+          >
+            Next
+            <span className="material-icons-round" style={{ fontSize: '1.2rem' }}>chevron_right</span>
+          </button>
+        </div>
+      )}
     </div>
 
   );
