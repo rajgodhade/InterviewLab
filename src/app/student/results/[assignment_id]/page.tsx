@@ -135,11 +135,19 @@ export default function StudentInterviewResults() {
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ background: 'var(--bg-primary)', padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Scheduled</span>
-                <strong>{assignment.scheduled_date} at {assignment.start_time}</strong>
+                <strong>
+                  {assignment.scheduled_date ? new Date(`${assignment.scheduled_date}T${assignment.start_time || '00:00:00'}`).toLocaleString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+                  }) : 'N/A'}
+                </strong>
               </div>
               <div style={{ background: 'var(--bg-primary)', padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Submitted</span>
-                <strong>{assignment.submitted_at ? new Date(assignment.submitted_at).toLocaleString() : 'N/A'}</strong>
+                <strong>
+                  {assignment.submitted_at ? new Date(assignment.submitted_at).toLocaleString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+                  }) : 'N/A'}
+                </strong>
               </div>
             </div>
           </div>

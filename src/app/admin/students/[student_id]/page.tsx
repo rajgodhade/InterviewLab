@@ -15,6 +15,9 @@ export default function StudentProfile() {
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isEditingKey, setIsEditingKey] = useState(false);
+  const [tempKey, setTempKey] = useState('');
+  const [updatingKey, setUpdatingKey] = useState(false);
 
   useEffect(() => {
     if (studentId && studentId !== 'undefined') {
@@ -105,6 +108,32 @@ export default function StudentProfile() {
     }
   };
 
+  const handleUpdateKey = async () => {
+    if (tempKey.length !== 4) {
+      showToast('Key must be exactly 4 digits', 'error');
+      return;
+    }
+
+    try {
+      setUpdatingKey(true);
+      const { error } = await supabase
+        .from('students')
+        .update({ access_key: tempKey })
+        .eq('id', studentId);
+
+      if (error) throw error;
+
+      setStudent({ ...student, access_key: tempKey });
+      setIsEditingKey(false);
+      showToast('Access key updated successfully', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Failed to update key', 'error');
+    } finally {
+      setUpdatingKey(false);
+    }
+  };
+
   const calculateScore = (responses: any[]) => {
     if (!responses || responses.length === 0) return 0;
     return responses.reduce((acc: number, res: any) => {
@@ -179,7 +208,41 @@ export default function StudentProfile() {
               <div className="flex-between">
                 <div>
                   <h1 style={{ margin: 0, fontSize: '2.2rem' }}>{student.name}</h1>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '0.4rem' }}>{student.email}</p>
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.4rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', margin: 0 }}>{student.email}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <span className="material-icons-round" style={{ fontSize: '0.9rem', color: 'var(--accent-color)' }}>key</span>
+                      {isEditingKey ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input 
+                            autoFocus
+                            maxLength={4}
+                            value={tempKey}
+                            onChange={(e) => setTempKey(e.target.value.replace(/\D/g, ''))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleUpdateKey();
+                              if (e.key === 'Escape') setIsEditingKey(false);
+                            }}
+                            style={{ width: '60px', padding: '0.2rem', fontSize: '1rem', textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--accent-color)', color: 'var(--accent-color)', fontWeight: 800, borderRadius: '4px' }}
+                          />
+                          <button onClick={handleUpdateKey} disabled={updatingKey} style={{ background: 'none', border: 'none', color: 'var(--success)', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <span className="material-icons-round" style={{ fontSize: '1.2rem' }}>check</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <code style={{ fontWeight: 800, color: 'var(--accent-color)', fontSize: '1rem' }}>{student.access_key || '0000'}</code>
+                          <button 
+                            onClick={() => { setTempKey(student.access_key || '0000'); setIsEditingKey(true); }}
+                            title="Change Access Key"
+                            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', padding: 0, cursor: 'pointer', opacity: 0.6, display: 'flex', alignItems: 'center' }}
+                          >
+                            <span className="material-icons-round" style={{ fontSize: '1rem' }}>edit</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Account Status</span>

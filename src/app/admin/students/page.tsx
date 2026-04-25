@@ -14,7 +14,7 @@ export default function StudentProfileList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newStudents, setNewStudents] = useState([{ name: '', email: '' }]);
+  const [newStudents, setNewStudents] = useState([{ name: '', email: '', access_key: '0000' }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -107,6 +107,7 @@ export default function StudentProfileList() {
         .insert(validStudents.map(s => ({
           name: s.name,
           email: s.email.toLowerCase().trim(),
+          access_key: s.access_key || '0000',
           is_archived: false
         })))
         .select();
@@ -114,7 +115,7 @@ export default function StudentProfileList() {
       if (error) throw error;
 
       fetchStudents(); // Refresh to ensure all data (like assignments count) is correct
-      setNewStudents([{ name: '', email: '' }]);
+      setNewStudents([{ name: '', email: '', access_key: '0000' }]);
       setIsAddModalOpen(false);
       showToast(`Successfully added ${data?.length} students`, 'success');
     } catch (err: any) {
@@ -126,7 +127,7 @@ export default function StudentProfileList() {
   };
 
   const addMoreRow = () => {
-    setNewStudents([...newStudents, { name: '', email: '' }]);
+    setNewStudents([...newStudents, { name: '', email: '', access_key: '0000' }]);
   };
 
   const removeRow = (index: number) => {
@@ -134,7 +135,7 @@ export default function StudentProfileList() {
     setNewStudents(newStudents.filter((_, i) => i !== index));
   };
 
-  const updateStudentField = (index: number, field: 'name' | 'email', value: string) => {
+  const updateStudentField = (index: number, field: 'name' | 'email' | 'access_key', value: string) => {
     setNewStudents(newStudents.map((s, i) => i === index ? { ...s, [field]: value } : s));
   };
 
@@ -210,10 +211,11 @@ export default function StudentProfileList() {
       return;
     }
 
-    const headers = ['Name', 'Email', 'Status', 'Sessions'];
+    const headers = ['Name', 'Email', 'Access Key', 'Status', 'Sessions'];
     const rows = studentsToExport.map(s => [
       `"${s.name}"`,
       `"${s.email}"`,
+      `"${s.access_key || '0000'}"`,
       s.is_archived ? 'Archived' : 'Active',
       s.interview_assignments?.length || 0
     ]);
@@ -340,7 +342,7 @@ export default function StudentProfileList() {
               style={{ 
                 padding: '0.4rem 0.8rem', 
                 background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent',
-                color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
+                color: viewMode === 'grid' ? 'white' : 'var(--text-secondary)',
                 fontSize: '0.8rem',
                 border: 'none',
                 borderRadius: '6px',
@@ -354,7 +356,7 @@ export default function StudentProfileList() {
               style={{ 
                 padding: '0.4rem 0.8rem', 
                 background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent',
-                color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)',
+                color: viewMode === 'list' ? 'white' : 'var(--text-secondary)',
                 fontSize: '0.8rem',
                 border: 'none',
                 borderRadius: '6px',
@@ -471,6 +473,7 @@ export default function StudentProfileList() {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, wordBreak: 'break-word', lineHeight: 1.2 }}>{student.name}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0', wordBreak: 'break-all' }}>{student.email}</p>
+                  <p style={{ color: 'var(--accent-color)', fontSize: '0.75rem', fontWeight: 700, margin: '0.4rem 0 0 0', letterSpacing: '0.05em' }}>KEY: {student.access_key || '0000'}</p>
                 </div>
               </div>
 
@@ -557,10 +560,11 @@ export default function StudentProfileList() {
         <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)' }}>
+              <tr style={{ background: 'var(--bg-accent)', borderBottom: '1px solid var(--border-color)' }}>
                 {isSelectionMode && <th style={{ padding: '1rem', width: '40px' }}></th>}
                 <th style={{ padding: '1rem' }}>Student</th>
                 <th style={{ padding: '1rem' }}>Email</th>
+                <th style={{ padding: '1rem' }}>Access Key</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>Sessions</th>
                 <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
               </tr>
@@ -570,7 +574,7 @@ export default function StudentProfileList() {
                 <tr 
                   key={student.id} 
                   style={{ 
-                    borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                    borderBottom: '1px solid var(--border-color)', 
                     background: selectedIds.includes(student.id) ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
                     opacity: student.is_archived ? 0.8 : 1
                   }}
@@ -594,6 +598,9 @@ export default function StudentProfileList() {
                     </div>
                   </td>
                   <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{student.email}</td>
+                  <td style={{ padding: '1rem' }}>
+                    <code style={{ background: 'var(--bg-accent)', padding: '0.2rem 0.4rem', borderRadius: '4px', color: 'var(--accent-color)', fontWeight: 700 }}>{student.access_key || '0000'}</code>
+                  </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                     <span style={{ background: 'var(--bg-accent)', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.85rem' }}>
                       {student.interview_assignments?.length || 0}
@@ -602,14 +609,14 @@ export default function StudentProfileList() {
                   <td style={{ padding: '1rem', textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <Link href={`/admin/students/${student.id}`}>
-                        <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--bg-accent)' }}>View</button>
+                        <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>View</button>
                       </Link>
-                      <button 
-                        onClick={() => handleArchive(student.id, student.is_archived)}
-                        style={{ padding: '0.4rem 0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}
-                      >
-                        {student.is_archived ? '📤' : '📥'}
-                      </button>
+                        <button 
+                          onClick={() => handleArchive(student.id, student.is_archived)}
+                          style={{ padding: '0.4rem 0.8rem', background: 'var(--bg-accent)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          {student.is_archived ? '📤' : '📥'}
+                        </button>
                       {student.is_archived && (
                         <button 
                           onClick={() => handleDelete(student.id, student.name)}
@@ -706,13 +713,13 @@ export default function StudentProfileList() {
               {newStudents.map((s, index) => (
                 <div key={index} style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: '1fr 1.5fr auto', 
+                  gridTemplateColumns: '1fr 1.5fr 80px auto', 
                   gap: '1rem', 
                   alignItems: 'flex-end',
-                  background: 'rgba(255,255,255,0.02)',
+                  background: 'var(--bg-accent)',
                   padding: '1rem',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.05)'
+                  border: '1px solid var(--border-color)'
                 }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 600 }}>Name</label>
@@ -733,6 +740,16 @@ export default function StudentProfileList() {
                       value={s.email}
                       onChange={(e) => updateStudentField(index, 'email', e.target.value)}
                       style={{ padding: '0.6rem 0.8rem', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div style={{ width: '80px' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 600 }}>Key</label>
+                    <input 
+                      required
+                      maxLength={4}
+                      value={s.access_key}
+                      onChange={(e) => updateStudentField(index, 'access_key', e.target.value.replace(/\D/g, ''))}
+                      style={{ padding: '0.6rem 0.8rem', fontSize: '0.9rem', textAlign: 'center' }}
                     />
                   </div>
                   {newStudents.length > 1 && (
@@ -761,7 +778,7 @@ export default function StudentProfileList() {
               }}>
                 <button 
                   type="button" 
-                  onClick={() => { setIsAddModalOpen(false); setNewStudents([{ name: '', email: '' }]); }}
+                  onClick={() => { setIsAddModalOpen(false); setNewStudents([{ name: '', email: '', access_key: '0000' }]); }}
                   style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 >
                   Cancel

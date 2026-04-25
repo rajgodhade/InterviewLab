@@ -4,8 +4,10 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { useUI } from './UIProvider';
 
 export default function Navigation() {
+  const { theme, toggleTheme } = useUI()!;
   const pathname = usePathname();
   const supabase = createClient();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +16,27 @@ export default function Navigation() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [studentId, setStudentId] = useState<string | null>(null);
+  const [platformName, setPlatformName] = useState('InterviewLab');
+  const [logoUrl, setLogoUrl] = useState('/logo.png');
+
+  // Fetch platform settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('platform_settings')
+          .select('platform_name, logo_url')
+          .single();
+        if (data) {
+          if (data.platform_name) setPlatformName(data.platform_name);
+          if (data.logo_url) setLogoUrl(data.logo_url);
+        }
+      } catch (err) {
+        console.error('Error fetching settings for nav:', err);
+      }
+    };
+    fetchSettings();
+  }, [supabase]);
 
   // Close menu when route changes
   useEffect(() => {
@@ -45,7 +68,7 @@ export default function Navigation() {
 
     window.addEventListener('storage', checkStudent);
     return () => window.removeEventListener('storage', checkStudent);
-  }, []);
+  }, [pathname]);
 
   // Hide admin menus on student/interview routes
   const isStudentRoute = pathname?.startsWith('/student') || pathname?.startsWith('/interview');
@@ -272,6 +295,7 @@ export default function Navigation() {
           <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
           <Link href="/admin/analytics" style={{ fontSize: '0.9rem', color: isActive('/admin/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/analytics') ? 700 : 500 }}>Analytics</Link>
           <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
+          <Link href="/admin/settings" style={{ fontSize: '0.9rem', color: isActive('/admin/settings') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/settings') ? 700 : 500 }}>Settings</Link>
           <Link href="/admin/messages" title="Messages" style={{ 
             fontSize: '0.9rem', 
             color: isActive('/admin/messages') ? 'var(--accent-color)' : 'inherit', 
@@ -318,15 +342,38 @@ export default function Navigation() {
         href={isInsideInterview ? '#' : (isAdmin || isAdminRoute ? '/admin' : (isStudent || isStudentRoute ? '/student/dashboard' : '/'))} 
         style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', cursor: isInsideInterview ? 'default' : 'pointer', zIndex: 1001 }}
       >
-        <img src="/logo.png" alt="InterviewLab" style={{ height: '36px', width: 'auto', borderRadius: '6px' }} />
+        <img src={logoUrl} alt={platformName} style={{ height: '36px', width: 'auto', borderRadius: '6px', objectFit: 'contain' }} />
         <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-          Interview<span style={{ color: 'var(--accent-color)' }}>Lab</span>
+          {platformName}
         </span>
       </Link>
 
       {/* Desktop Navigation */}
       <div className="flex-desktop" style={{ gap: '1.5rem', alignItems: 'center' }}>
         {navLinks}
+        {!isInsideInterview && (
+          <button 
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.4rem',
+              borderRadius: '8px',
+              transition: 'all 0.2s ease',
+              marginLeft: '0.5rem'
+            }}
+          >
+            <span className="material-icons-round" style={{ fontSize: '1.2rem' }}>
+              {theme === 'light' ? 'dark_mode' : 'light_mode'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu Toggle */}
@@ -354,6 +401,28 @@ export default function Navigation() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center', fontSize: '1.2rem' }}>
             {navLinks}
+            <button 
+              onClick={() => { toggleTheme(); setIsMenuOpen(false); }}
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                marginTop: '1rem'
+              }}
+            >
+              <span className="material-icons-round">
+                {theme === 'light' ? 'dark_mode' : 'light_mode'}
+              </span>
+              {theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            </button>
           </div>
         </div>
       )}

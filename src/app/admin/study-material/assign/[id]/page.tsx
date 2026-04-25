@@ -227,7 +227,7 @@ export default function AssignStudyMaterial() {
               style={{ 
                 flex: 1,
                 background: assignType === 'individual' ? 'var(--accent-gradient)' : 'transparent', 
-                color: '#fff', 
+                color: assignType === 'individual' ? 'white' : 'var(--text-secondary)', 
                 padding: '0.6rem', 
                 borderRadius: '8px', 
                 fontWeight: 700, 
@@ -241,7 +241,7 @@ export default function AssignStudyMaterial() {
               style={{ 
                 flex: 1,
                 background: assignType === 'batch' ? 'var(--accent-gradient)' : 'transparent', 
-                color: '#fff', 
+                color: assignType === 'batch' ? 'white' : 'var(--text-secondary)', 
                 padding: '0.6rem', 
                 borderRadius: '8px', 
                 fontWeight: 700, 
@@ -270,7 +270,7 @@ export default function AssignStudyMaterial() {
                         placeholder="Search students..." 
                         value={studentSearch}
                         onChange={(e) => setStudentSearch(e.target.value)}
-                        style={{ height: '45px', background: 'rgba(0,0,0,0.2)', fontSize: '0.9rem' }}
+                        style={{ height: '45px', background: 'var(--bg-secondary)', fontSize: '0.9rem', border: '1px solid var(--border-color)' }}
                       />
                     </div>
 
@@ -279,7 +279,7 @@ export default function AssignStudyMaterial() {
                       overflowY: 'auto', 
                       border: '1px solid var(--border-color)', 
                       borderRadius: '12px', 
-                      background: 'rgba(0,0,0,0.1)',
+                      background: 'var(--bg-secondary)',
                       padding: '0.25rem'
                     }}>
                       {filteredStudents.length === 0 ? (
@@ -307,7 +307,7 @@ export default function AssignStudyMaterial() {
                                 gap: '0.75rem', 
                                 cursor: 'pointer', 
                                 borderRadius: '8px',
-                                background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                                background: isSelected ? 'var(--bg-accent)' : 'transparent',
                                 marginBottom: '0.2rem'
                               }}
                             >
@@ -387,7 +387,7 @@ export default function AssignStudyMaterial() {
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '700px', overflowY: 'auto', paddingRight: '0.75rem' }}>
                 {existingAssignments.filter(a => a.student_id).length === 0 ? (
-                  <div className="card" style={{ textAlign: 'center', padding: '3rem', background: 'rgba(0,0,0,0.05)', borderStyle: 'dashed' }}>
+                  <div className="card" style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-accent)', borderStyle: 'dashed' }}>
                     <p style={{ color: 'var(--text-secondary)' }}>No individual access granted</p>
                   </div>
                 ) : (
@@ -422,7 +422,7 @@ export default function AssignStudyMaterial() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {existingAssignments.filter(a => a.group_id).length === 0 ? (
-                  <div className="card" style={{ textAlign: 'center', padding: '3rem', background: 'rgba(0,0,0,0.05)', borderStyle: 'dashed' }}>
+                  <div className="card" style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-accent)', borderStyle: 'dashed' }}>
                     <p style={{ color: 'var(--text-secondary)' }}>No batch access granted</p>
                   </div>
                 ) : (
@@ -448,7 +448,7 @@ export default function AssignStudyMaterial() {
 
       <style jsx>{`
         .student-item:hover {
-          background: rgba(255, 255, 255, 0.03) !important;
+          background: var(--bg-accent) !important;
           transform: translateX(5px);
         }
         .revoke-btn {

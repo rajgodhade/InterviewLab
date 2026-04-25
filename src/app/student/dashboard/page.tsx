@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useUI } from '@/components/UIProvider';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Cell, Legend, PieChart, Pie
@@ -80,7 +81,7 @@ const ArticleCard = ({ article, isSaved, onToggleSave, compact }: { article: any
             <div style={{ marginBottom: '1rem', paddingRight: '35px' }}>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                 {article.tag_list?.slice(0, 2).map((tag: string) => (
-                  <span key={tag} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.08)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  <span key={tag} style={{ fontSize: '0.65rem', background: 'var(--bg-accent)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-secondary)', fontWeight: 600, border: '1px solid var(--border-color)' }}>
                     #{tag}
                   </span>
                 ))}
@@ -124,17 +125,17 @@ const ArticleCard = ({ article, isSaved, onToggleSave, compact }: { article: any
         transform: compact ? 'translateY(-50%)' : 'none',
         width: compact ? '28px' : '32px',
         height: compact ? '28px' : '32px',
-        background: isSaved ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
+        background: isSaved ? 'var(--accent-color)' : 'var(--bg-accent)',
         borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         zIndex: 100,
-        color: '#fff',
+        color: isSaved ? '#fff' : 'var(--text-primary)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: isSaved ? '0 4px 12px rgba(59, 130, 246, 0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
-        border: '1px solid rgba(255,255,255,0.1)'
+        boxShadow: isSaved ? '0 4px 12px rgba(59, 130, 246, 0.4)' : 'var(--shadow-premium)',
+        border: '1px solid var(--border-color)'
       }}
       title={isSaved ? 'Remove from reading list' : 'Save for later'}
     >
@@ -147,6 +148,7 @@ const ArticleCard = ({ article, isSaved, onToggleSave, compact }: { article: any
 
 export default function StudentDashboardOverview() {
   const router = useRouter();
+  const { showToast } = useUI();
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,6 +166,11 @@ export default function StudentDashboardOverview() {
   const [savedArticles, setSavedArticles] = useState<any[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(true);
   const [acknowledgedMissed, setAcknowledgedMissed] = useState<string[]>([]);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [newAccessKey, setNewAccessKey] = useState('');
+  const [confirmKey, setConfirmKey] = useState('');
+  const [updatingKey, setUpdatingKey] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   
   useEffect(() => {
     const saved = localStorage.getItem('acknowledged_missed_interviews');
@@ -382,7 +389,7 @@ export default function StudentDashboardOverview() {
       if (!file || !studentInfo) return;
 
       if (file.size > 2 * 1024 * 1024) {
-        alert('File too large. Maximum size is 2MB.');
+        showToast('File too large. Maximum size is 2MB.', 'error');
         return;
       }
 
@@ -410,7 +417,7 @@ export default function StudentDashboardOverview() {
       setStudentInfo({ ...studentInfo, photo_url: publicUrl });
     } catch (err: any) {
       console.error(err);
-      alert('Upload failed. Ensure "avatars" bucket is public.');
+      showToast('Upload failed. Ensure "avatars" bucket is public.', 'error');
     } finally {
       setUploading(false);
     }
@@ -461,6 +468,44 @@ export default function StudentDashboardOverview() {
     })).sort((a, b) => b.value - a.value);
   }, [assignments]);
 
+  const handleUpdateAccessKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newAccessKey !== confirmKey) {
+      showToast('Access keys do not match!', 'error');
+      return;
+    }
+    if (newAccessKey.length !== 4) {
+      showToast('Access key must be exactly 4 digits!', 'warning');
+      return;
+    }
+
+    try {
+      setUpdatingKey(true);
+      const { error } = await supabase
+        .from('students')
+        .update({ access_key: newAccessKey })
+        .eq('id', studentInfo.id);
+
+      if (error) throw error;
+      
+      setUpdateSuccess(true);
+      showToast('Access key updated successfully!', 'success');
+      
+      setTimeout(() => {
+        setIsSettingsModalOpen(false);
+        setUpdateSuccess(false);
+        setNewAccessKey('');
+        setConfirmKey('');
+      }, 2000);
+      
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update access key.', 'error');
+    } finally {
+      setUpdatingKey(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container flex-center" style={{ minHeight: '60vh' }}>
@@ -504,20 +549,44 @@ export default function StudentDashboardOverview() {
               <p style={{ color: 'var(--text-secondary)', marginTop: '0.2rem', fontSize: '0.9rem' }}>{studentInfo?.email}</p>
             </div>
           </div>
-          <button 
-            onClick={() => { localStorage.clear(); router.push('/student'); }} 
-            style={{ 
-              background: 'rgba(239,68,68,0.1)', 
-              color: 'var(--danger)', 
-              border: '1px solid rgba(239,68,68,0.2)',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '12px',
-              fontWeight: 700,
-              fontSize: '0.85rem'
-            }}
-          >
-            Sign Out
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button 
+              onClick={() => setIsSettingsModalOpen(true)} 
+              style={{ 
+                background: 'var(--bg-accent)', 
+                color: 'var(--text-primary)', 
+                border: '1px solid var(--border-color)',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <span className="material-icons-round" style={{ fontSize: '1.2rem' }}>settings</span>
+              Settings
+            </button>
+            <button 
+              onClick={() => { 
+                localStorage.removeItem('student_email');
+                localStorage.removeItem('acknowledged_missed_interviews');
+                router.push('/student'); 
+              }} 
+              style={{ 
+                background: 'rgba(239,68,68,0.1)', 
+                color: 'var(--danger)', 
+                border: '1px solid rgba(239,68,68,0.2)',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.85rem'
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
       
@@ -583,10 +652,10 @@ export default function StudentDashboardOverview() {
                   gridTemplateColumns: '1fr 1fr', 
                   gap: '1rem',
                   padding: '1rem', 
-                  background: 'rgba(255,255,255,0.03)', 
+                  background: 'var(--bg-accent)', 
                   borderRadius: '16px', 
                   fontSize: '0.85rem',
-                  border: '1px solid rgba(255,255,255,0.02)'
+                  border: '1px solid var(--border-color)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <span className="material-icons-round" style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }}>event</span>
@@ -602,7 +671,7 @@ export default function StudentDashboardOverview() {
                       <span style={{ fontWeight: 600 }}>{a.start_time}</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', gridColumn: 'span 2', marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', gridColumn: 'span 2', marginTop: '0.25rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
                     <span className="material-icons-round" style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }}>timer</span>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Duration:</span>
@@ -699,7 +768,7 @@ export default function StudentDashboardOverview() {
             {trendData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
                   <Tooltip 
@@ -735,11 +804,11 @@ export default function StudentDashboardOverview() {
             {skillData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={skillData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" horizontal={false} />
                   <XAxis type="number" hide domain={[0, 100]} />
                   <YAxis dataKey="name" type="category" stroke="var(--text-primary)" fontSize={12} width={100} tickLine={false} axisLine={false} />
                   <Tooltip 
-                    cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                    cursor={{ fill: 'var(--bg-accent)' }}
                     contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
                   />
                   <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={20}>
@@ -889,11 +958,11 @@ export default function StudentDashboardOverview() {
               const score = total > 0 ? Math.round((correct / total) * 100) : 0;
 
               return (
-                <div key={a.id} className="flex-between" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div key={a.id} className="flex-between" style={{ padding: '1rem', background: 'var(--bg-accent)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{a.interviews?.title}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                      {new Date(a.created_at).toLocaleDateString()} • {a.interviews?.technology}
+                      {new Date(a.submitted_at || a.scheduled_date || a.created_at || Date.now()).toLocaleDateString()} • {a.interviews?.technology}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -924,19 +993,19 @@ export default function StudentDashboardOverview() {
                 </div>
               </Link>
               <Link href="/student/study-material" style={{ textDecoration: 'none' }}>
-                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
+                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'var(--bg-accent)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
                   <span style={{ fontSize: '1.5rem' }}>📚</span>
                   <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>Study Material</span>
                 </div>
               </Link>
               <Link href="/student/leaderboard" style={{ textDecoration: 'none' }}>
-                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
+                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'var(--bg-accent)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
                   <span style={{ fontSize: '1.5rem' }}>🏆</span>
                   <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>Leaderboard</span>
                 </div>
               </Link>
               <Link href="/student/messages" style={{ textDecoration: 'none' }}>
-                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)', position: 'relative' }}>
+                <div className="flex-center" style={{ flexDirection: 'column', gap: '0.5rem', padding: '1.25rem', background: 'var(--bg-accent)', borderRadius: '16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)', position: 'relative' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-color)' }}>
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                   </svg>
@@ -960,7 +1029,7 @@ export default function StudentDashboardOverview() {
             boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
           }}>
             <div>
-              <h4 style={{ margin: 0, opacity: 0.9 }}>Ready for your next challenge?</h4>
+              <h4 style={{ margin: 0, opacity: 0.9, color: '#fff' }}>Ready for your next challenge?</h4>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>You have {stats.pendingInterviews} pending interviews.</p>
             </div>
             <Link href="/student/interviews">
@@ -972,7 +1041,95 @@ export default function StudentDashboardOverview() {
         </div>
       </div>
 
+      {/* Settings Modal */}
+      {isSettingsModalOpen && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+          padding: '1.5rem'
+        }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span className="material-icons-round">security</span> Security Settings
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Your 4-digit access key is required to login to your portal. Keep it secure.
+            </p>
+            
+            {updateSuccess ? (
+              <div className="flex-center" style={{ flexDirection: 'column', gap: '1.5rem', padding: '2rem 0', animation: 'scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+                <div style={{ 
+                  width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)'
+                }}>
+                  <span className="material-icons-round" style={{ fontSize: '3.5rem' }}>check_circle</span>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <h3 style={{ margin: 0, color: 'var(--success)' }}>Success!</h3>
+                  <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Your access key has been updated.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleUpdateAccessKey} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>New Access Key (4 Digits)</label>
+                  <input 
+                    required
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="0000"
+                    value={newAccessKey}
+                    onChange={(e) => setNewAccessKey(e.target.value.replace(/\D/g, ''))}
+                    style={{ width: '100%', textAlign: 'center', fontSize: '1.2rem', letterSpacing: '0.5rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>Confirm Access Key</label>
+                  <input 
+                    required
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="0000"
+                    value={confirmKey}
+                    onChange={(e) => setConfirmKey(e.target.value.replace(/\D/g, ''))}
+                    style={{ width: '100%', textAlign: 'center', fontSize: '1.2rem', letterSpacing: '0.5rem' }}
+                  />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => { setIsSettingsModalOpen(false); setNewAccessKey(''); setConfirmKey(''); }}
+                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={updatingKey || newAccessKey.length !== 4}
+                    style={{ background: 'var(--accent-gradient)' }}
+                  >
+                    {updatingKey ? 'Updating...' : 'Save Key'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .card:hover {
           transform: translateY(-5px);
           box-shadow: 0 12px 24px -8px rgba(0,0,0,0.3);

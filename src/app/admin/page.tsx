@@ -376,7 +376,7 @@ export default function AdminDashboard() {
               placeholder="Search interviews..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '2.5rem', height: '42px', borderRadius: '12px', border: 'none', background: 'rgba(0,0,0,0.2)', width: '100%', fontSize: '0.9rem' }}
+              style={{ paddingLeft: '2.5rem', height: '42px', borderRadius: '12px', border: 'none', background: 'var(--bg-secondary)', color: 'var(--text-primary)', width: '100%', fontSize: '0.9rem' }}
             />
           </div>
           
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
             <select 
               value={filterDifficulty}
               onChange={(e) => setFilterDifficulty(e.target.value)}
-              style={{ width: 'auto', height: '42px', minWidth: '140px', fontSize: '0.85rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)' }}
+              style={{ width: 'auto', height: '42px', minWidth: '140px', fontSize: '0.85rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             >
               <option value="All">All Difficulty</option>
               <option value="Beginner">Beginner</option>
@@ -394,7 +394,7 @@ export default function AdminDashboard() {
 
             <div style={{ height: '24px', width: '1px', background: 'var(--border-color)' }}></div>
 
-            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '0.25rem', borderRadius: '10px', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: '10px', gap: '0.25rem' }}>
               <button 
                 onClick={() => updateViewMode('grid')}
                 style={{ 
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
                       cursor: 'pointer', fontSize: '1.5rem', padding: '0.5rem', lineHeight: 0,
                       transition: '0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                   >
                     ⋮
@@ -540,7 +540,7 @@ export default function AdminDashboard() {
                     <span style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', fontSize: '0.55rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{interview.difficulty}</span>
                   </div>
                   
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#fff', paddingRight: '2rem', lineHeight: 1.2 }}>{interview.title}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', paddingRight: '2rem', lineHeight: 1.2 }}>{interview.title}</h3>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
                     <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}>{getTechIcons(interview.technology)[0] || '💻'}</span>
@@ -550,13 +550,13 @@ export default function AdminDashboard() {
 
                 {/* Metrics Visualization */}
                 <div style={{ 
-                  display: 'flex', gap: '0.75rem', background: 'rgba(0,0,0,0.25)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)'
+                  display: 'flex', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border-color)'
                 }}>
                   <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{interview.interview_assignments?.length || 0}</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{interview.interview_assignments?.length || 0}</div>
                     <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '0.3rem' }}>Assigned</div>
                   </div>
-                  <div style={{ width: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                  <div style={{ width: '1px', background: 'var(--border-color)' }}></div>
                   <div style={{ flex: 1, textAlign: 'center' }}>
                     <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--success)', lineHeight: 1 }}>
                       {interview.interview_assignments?.filter((a: any) => a.status === 'completed').length || 0}
@@ -659,7 +659,7 @@ export default function AdminDashboard() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                       transition: '0.2s', cursor: 'pointer'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                     >
                       <span className="material-icons-round" style={{ fontSize: '1.1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>analytics</span>
@@ -811,7 +811,8 @@ export default function AdminDashboard() {
                   color: currentPage === page ? '#fff' : 'var(--text-secondary)',
                   border: '1px solid var(--border-color)', fontWeight: 700,
                   cursor: 'pointer', transition: '0.2s',
-                  boxShadow: currentPage === page ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                  boxShadow: currentPage === page ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
                 }}
               >
                 {page}

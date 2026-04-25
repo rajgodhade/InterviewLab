@@ -159,7 +159,7 @@ export default function BatchesDashboard() {
               style={{ 
                 padding: '0.4rem 0.8rem', 
                 background: viewMode === 'grid' ? 'var(--accent-gradient)' : 'transparent',
-                color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
+                color: viewMode === 'grid' ? 'white' : 'var(--text-secondary)',
                 fontSize: '0.8rem',
                 border: 'none',
                 borderRadius: '6px',
@@ -173,7 +173,7 @@ export default function BatchesDashboard() {
               style={{ 
                 padding: '0.4rem 0.8rem', 
                 background: viewMode === 'list' ? 'var(--accent-gradient)' : 'transparent',
-                color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)',
+                color: viewMode === 'list' ? 'white' : 'var(--text-secondary)',
                 fontSize: '0.8rem',
                 border: 'none',
                 borderRadius: '6px',
@@ -242,7 +242,7 @@ export default function BatchesDashboard() {
         <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-color)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)' }}>
+              <tr style={{ background: 'var(--bg-accent)', borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ padding: '1rem' }}>Batch Name</th>
                 <th style={{ padding: '1rem' }}>Description</th>
                 <th style={{ padding: '1rem', textAlign: 'center' }}>Members</th>
@@ -251,7 +251,7 @@ export default function BatchesDashboard() {
             </thead>
             <tbody>
               {filteredBatches.map((b) => (
-                <tr key={b.id} className="material-card-list" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: b.is_archived ? 0.8 : 1, transition: 'all 0.3s ease' }}>
+                <tr key={b.id} className="material-card-list" style={{ borderBottom: '1px solid var(--border-color)', opacity: b.is_archived ? 0.8 : 1, transition: 'all 0.3s ease' }}>
                   <td style={{ padding: '1rem' }}>
                     <span style={{ fontWeight: 600 }}>{b.name}</span>
                   </td>
@@ -266,11 +266,11 @@ export default function BatchesDashboard() {
                   <td style={{ padding: '1rem', textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <Link href={`/admin/batches/${b.id}`}>
-                        <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--bg-accent)' }}>Manage</button>
+                        <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>Manage</button>
                       </Link>
                       <button 
                         onClick={() => handleArchive(b.id, b.is_archived)}
-                        style={{ padding: '0.4rem 0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}
+                        style={{ padding: '0.4rem 0.8rem', background: 'var(--bg-accent)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         {b.is_archived ? '📤' : '📥'}
                       </button>

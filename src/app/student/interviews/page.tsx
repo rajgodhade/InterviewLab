@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useUI } from '@/components/UIProvider';
 import { getTechIcons } from '@/utils/tech-utils';
 
 export default function StudentDashboard() {
   const router = useRouter();
+  const { showToast } = useUI();
   const [studentInfo, setStudentInfo] = useState<{id: string, name: string, email: string, photo_url: string} | null>(null);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ export default function StudentDashboard() {
 
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        alert('File too large. Maximum size is 2MB.');
+        showToast('File too large. Maximum size is 2MB.', 'error');
         return;
       }
 
@@ -132,7 +134,7 @@ export default function StudentDashboard() {
       setStudentInfo({ ...studentInfo, photo_url: publicUrl });
     } catch (err: any) {
       console.error(err);
-      alert('Upload failed. Ensure "avatars" bucket is public in Supabase.');
+      showToast('Upload failed. Ensure "avatars" bucket is public in Supabase.', 'error');
     } finally {
       setUploading(false);
     }

@@ -36,11 +36,14 @@ CREATE TABLE students (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  photo_url TEXT
+  photo_url TEXT,
+  access_key TEXT NOT NULL DEFAULT '0000',
+  is_archived BOOLEAN DEFAULT false
 );
 
--- Run this to add photo_url to an existing students table:
--- ALTER TABLE students ADD COLUMN photo_url TEXT;
+-- Run this to add access_key to an existing students table:
+-- ALTER TABLE students ADD COLUMN access_key TEXT NOT NULL DEFAULT '0000';
+-- ALTER TABLE students ADD COLUMN is_archived BOOLEAN DEFAULT false;
 
 -- 4. Create Interview Assignments Table
 CREATE TABLE interview_assignments (

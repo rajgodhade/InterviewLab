@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
 // ── Toast Types ──
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -22,6 +23,8 @@ interface ConfirmOptions {
 interface UIContextType {
   showToast: (message: string, type?: ToastType) => void;
   showConfirm: (options: ConfirmOptions) => Promise<boolean>;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 const UIContext = createContext<UIContextType | null>(null);
@@ -37,6 +40,94 @@ let toastId = 0;
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirm, setConfirm] = useState<{ options: ConfirmOptions; resolve: (v: boolean) => void } | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+  const [themeColors, setThemeColors] = useState<{
+    primary_color?: string;
+    secondary_color?: string;
+    bg_primary?: string;
+    bg_secondary?: string;
+    text_primary?: string;
+    text_secondary?: string;
+    light_bg_primary?: string;
+    light_bg_secondary?: string;
+    light_text_primary?: string;
+    light_text_secondary?: string;
+    light_primary_color?: string;
+    light_secondary_color?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme-preference') as 'light' | 'dark';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+    setIsThemeLoaded(true);
+
+    const fetchSettings = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.from('platform_settings').select('*').single();
+        if (data) {
+          setThemeColors({
+            primary_color: data.primary_color,
+            secondary_color: data.secondary_color,
+            bg_primary: data.bg_primary,
+            bg_secondary: data.bg_secondary,
+            text_primary: data.text_primary,
+            text_secondary: data.text_secondary,
+            light_bg_primary: data.light_bg_primary,
+            light_bg_secondary: data.light_bg_secondary,
+            light_text_primary: data.light_text_primary,
+            light_text_secondary: data.light_text_secondary,
+            light_primary_color: data.light_primary_color,
+            light_secondary_color: data.light_secondary_color
+          });
+
+          // Only use default if user hasn't explicitly set a preference
+          if (!savedTheme && data.default_theme_mode) {
+            setTheme(data.default_theme_mode as 'light' | 'dark');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load global theme:', err);
+      }
+    };
+    
+    fetchSettings();
+
+    // Listen for custom event to refetch when settings are saved
+    window.addEventListener('platform_settings_updated', fetchSettings);
+    return () => window.removeEventListener('platform_settings_updated', fetchSettings);
+  }, []);
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    // Only save to localStorage AFTER we've attempted to load the initial preference
+    if (isThemeLoaded) {
+      localStorage.setItem('theme-preference', theme);
+    }
+  }, [theme, isThemeLoaded]);
+
+  const toggleTheme = useCallback(async () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    
+    // Sync with server if student is logged in
+    const email = localStorage.getItem('student_email');
+    if (email) {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from('students')
+          .update({ preferred_theme: newTheme })
+          .eq('email', email);
+      } catch (err) {
+        console.error('Failed to sync theme with server:', err);
+      }
+    }
+  }, [theme]);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = ++toastId;
@@ -65,7 +156,26 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UIContext.Provider value={{ showToast, showConfirm }}>
+    <UIContext.Provider value={{ showToast, showConfirm, theme, toggleTheme }}>
+      {themeColors && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            ${theme === 'dark' && themeColors?.primary_color ? `--accent-color: ${themeColors.primary_color} !important;` : ''}
+            ${theme === 'dark' && themeColors?.primary_color ? `--accent-gradient: linear-gradient(135deg, ${themeColors.primary_color} 0%, ${themeColors.secondary_color || themeColors.primary_color} 100%) !important;` : ''}
+            ${theme === 'dark' && themeColors?.bg_primary ? `--bg-primary: ${themeColors.bg_primary} !important;` : ''}
+            ${theme === 'dark' && themeColors?.bg_secondary ? `--bg-secondary: ${themeColors.bg_secondary} !important;` : ''}
+            ${theme === 'dark' && themeColors?.text_primary ? `--text-primary: ${themeColors.text_primary} !important;` : ''}
+            ${theme === 'dark' && themeColors?.text_secondary ? `--text-secondary: ${themeColors.text_secondary} !important;` : ''}
+            
+            ${theme === 'light' && themeColors?.light_primary_color ? `--accent-color: ${themeColors.light_primary_color} !important;` : ''}
+            ${theme === 'light' && themeColors?.light_primary_color ? `--accent-gradient: linear-gradient(135deg, ${themeColors.light_primary_color} 0%, ${themeColors.light_secondary_color || themeColors.light_primary_color} 100%) !important;` : ''}
+            ${theme === 'light' && themeColors?.light_bg_primary ? `--bg-primary: ${themeColors.light_bg_primary} !important;` : ''}
+            ${theme === 'light' && themeColors?.light_bg_secondary ? `--bg-secondary: ${themeColors.light_bg_secondary} !important;` : ''}
+            ${theme === 'light' && themeColors?.light_text_primary ? `--text-primary: ${themeColors.light_text_primary} !important;` : ''}
+            ${theme === 'light' && themeColors?.light_text_secondary ? `--text-secondary: ${themeColors.light_text_secondary} !important;` : ''}
+          }
+        `}} />
+      )}
       {children}
 
       {/* ── Toast Container ── */}

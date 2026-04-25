@@ -36,6 +36,8 @@ export type Student = {
   name: string;
   email: string;
   photo_url?: string;
+  access_key: string;
+  is_archived?: boolean;
 };
 
 export type Assignment = {

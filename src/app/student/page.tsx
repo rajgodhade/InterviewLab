@@ -9,6 +9,7 @@ export default function StudentLogin() {
   const router = useRouter();
   const { showToast } = useUI();
   const [email, setEmail] = useState('');
+  const [accessKey, setAccessKey] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,12 +31,24 @@ export default function StudentLogin() {
         .from('students')
         .select('*')
         .eq('email', email.trim().toLowerCase())
+        .eq('access_key', accessKey.trim())
         .maybeSingle();
 
       if (error) throw error;
 
       if (!data) {
-        showToast('This email is not registered for any interviews. Please contact your admin.', 'error');
+        // Double check if email exists but key is wrong to give better error
+        const { data: emailExists } = await supabase
+          .from('students')
+          .select('id')
+          .eq('email', email.trim().toLowerCase())
+          .maybeSingle();
+        
+        if (emailExists) {
+          showToast('Invalid access key. Please check and try again.', 'error');
+        } else {
+          showToast('This email is not registered. Please contact your admin.', 'error');
+        }
         setLoading(false);
         return;
       }
@@ -43,6 +56,13 @@ export default function StudentLogin() {
       // Store in localStorage for session
       localStorage.setItem('student_email', email.trim().toLowerCase());
       localStorage.setItem('student_name', data.name || 'Student'); 
+      
+      // Load and apply preferred theme from server
+      if (data.preferred_theme) {
+        localStorage.setItem('theme-preference', data.preferred_theme);
+        // Dispatch event to notify UIProvider to refresh if it's already mounted
+        window.dispatchEvent(new Event('storage'));
+      }
       
       showToast(`Welcome back, ${data.name || 'Student'}!`, 'success');
       router.push('/student/dashboard');
@@ -68,6 +88,19 @@ export default function StudentLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ width: '100%' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Access Key (4-digit)</label>
+            <input 
+              required
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="Enter your 4-digit key"
+              value={accessKey}
+              onChange={(e) => setAccessKey(e.target.value.replace(/\D/g, ''))}
+              style={{ width: '100%', letterSpacing: '0.5rem', textAlign: 'center', fontSize: '1.2rem' }}
             />
           </div>
           <button type="submit" disabled={loading} style={{ marginTop: '1rem', background: loading ? 'var(--bg-accent)' : 'var(--accent-color)' }}>

@@ -258,12 +258,12 @@ export default function CreateInterview() {
     <>
       <style jsx global>{`
         select option {
-          background-color: #1a1a1a !important;
-          color: white !important;
+          background-color: var(--bg-secondary) !important;
+          color: var(--text-primary) !important;
           padding: 10px !important;
         }
         select {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent('gray')}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
           background-repeat: no-repeat !important;
           background-position: right 1rem center !important;
           background-size: 1em !important;
@@ -312,7 +312,7 @@ export default function CreateInterview() {
               <div 
                 style={{ 
                   display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.6rem', 
-                  background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border-color)', 
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', 
                   borderRadius: '14px', minHeight: '52px', alignItems: 'center',
                   transition: 'all 0.2s ease', cursor: 'text'
                 }} 
@@ -359,7 +359,7 @@ export default function CreateInterview() {
                   }}
                   style={{ 
                     flex: 1, border: 'none', background: 'transparent', outline: 'none', 
-                    minWidth: '120px', padding: '0', fontSize: '1rem', color: '#fff'
+                    minWidth: '120px', padding: '0', fontSize: '1rem', color: 'var(--text-primary)'
                   }}
                 />
               </div>
@@ -367,9 +367,9 @@ export default function CreateInterview() {
               {showSuggestions && (
                 <div style={{ 
                   position: 'absolute', top: 'calc(100% + 5px)', left: 0, width: '100%', zIndex: 100, 
-                  background: '#1a1a1a', border: '1px solid var(--border-color)', 
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', 
                   borderRadius: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', padding: '0.6rem',
-                  maxHeight: '280px', overflowY: 'auto', boxShadow: '0 15px 35px rgba(0,0,0,0.6)'
+                  maxHeight: '280px', overflowY: 'auto', boxShadow: 'var(--shadow-premium)'
                 }}>
                   {popularTech
                     .filter(tech => tech.name.toLowerCase().includes(techInput.toLowerCase()) && !selectedTechs.includes(tech.name))
@@ -385,7 +385,7 @@ export default function CreateInterview() {
                           display: 'flex', alignItems: 'center', gap: '0.7rem', fontSize: '0.9rem',
                           transition: 'all 0.2s ease'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-accent)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
                         <span style={{ fontSize: '1.2rem' }}>{tech.icon}</span> 
@@ -434,7 +434,7 @@ export default function CreateInterview() {
           </div>
 
           {formData.mode === 'AI' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: 'rgba(0,0,0,0.1)' }}>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: 'var(--bg-accent)' }}>
               <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>QUESTION COUNT</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                 <input 
@@ -451,7 +451,7 @@ export default function CreateInterview() {
                   max="50" 
                   value={formData.numQuestions} 
                   onChange={(e) => setFormData({...formData, numQuestions: parseInt(e.target.value) || 1})} 
-                  style={{ width: '80px', fontSize: '1.1rem', fontWeight: 800, textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem' }}
+                  style={{ width: '80px', fontSize: '1.1rem', fontWeight: 800, textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem' }}
                 />
               </div>
               <p style={{ margin: '0.75rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Questions will be generated by AI.</p>
@@ -461,7 +461,7 @@ export default function CreateInterview() {
           {formData.mode === 'Custom' && (
             <div style={{ 
               marginTop: '1.5rem', padding: '1.5rem', borderRadius: '16px', 
-              background: 'rgba(0,0,0,0.2)', border: '1px dashed var(--border-color)',
+              background: 'var(--bg-accent)', border: '1px dashed var(--border-color)',
               display: 'flex', flexDirection: 'column', gap: '1rem'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -481,7 +481,7 @@ export default function CreateInterview() {
               <div 
                 onClick={() => fileInputRef.current?.click()}
                 style={{ 
-                  padding: '1.5rem', border: '2px dashed rgba(255,255,255,0.1)', 
+                  padding: '1.5rem', border: '2px dashed var(--border-color)', 
                   borderRadius: '12px', textAlign: 'center', cursor: 'pointer',
                   transition: 'all 0.2s', background: csvQuestions.length > 0 ? 'rgba(52, 211, 153, 0.05)' : 'transparent'
                 }}
@@ -587,9 +587,35 @@ export default function CreateInterview() {
 
           {assignNow && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
-              <div style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.1)', padding: '0.3rem', borderRadius: '10px' }}>
-                <button type="button" onClick={() => setAssignType('individual')} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', background: assignType === 'individual' ? 'var(--bg-secondary)' : 'transparent', border: 'none', color: '#fff' }}>Individual</button>
-                <button type="button" onClick={() => setAssignType('batch')} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', background: assignType === 'batch' ? 'var(--bg-secondary)' : 'transparent', border: 'none', color: '#fff' }}>Batch</button>
+              <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-accent)', padding: '0.3rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setAssignType('individual')} 
+                  style={{ 
+                    flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                    background: assignType === 'individual' ? 'var(--bg-secondary)' : 'transparent', 
+                    border: 'none', color: 'var(--text-primary)',
+                    boxShadow: assignType === 'individual' ? 'var(--shadow-premium)' : 'none',
+                    fontWeight: assignType === 'individual' ? 700 : 500,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Individual
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setAssignType('batch')} 
+                  style={{ 
+                    flex: 1, padding: '0.6rem', borderRadius: '10px', 
+                    background: assignType === 'batch' ? 'var(--bg-secondary)' : 'transparent', 
+                    border: 'none', color: 'var(--text-primary)',
+                    boxShadow: assignType === 'batch' ? 'var(--shadow-premium)' : 'none',
+                    fontWeight: assignType === 'batch' ? 700 : 500,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Batch
+                </button>
               </div>
 
               {assignType === 'individual' ? (
@@ -606,7 +632,13 @@ export default function CreateInterview() {
                       <div 
                         key={s.id} 
                         onClick={() => setSelectedStudentIds(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
-                        style={{ padding: '0.75rem', borderRadius: '10px', background: selectedStudentIds.includes(s.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', border: selectedStudentIds.includes(s.id) ? '1px solid var(--accent-color)' : '1px solid transparent', cursor: 'pointer', fontSize: '0.85rem' }}
+                        style={{ 
+                          padding: '0.75rem 1rem', borderRadius: '12px', 
+                          background: selectedStudentIds.includes(s.id) ? 'var(--bg-accent)' : 'transparent', 
+                          border: selectedStudentIds.includes(s.id) ? '1px solid var(--accent-color)' : '1px solid var(--border-color)', 
+                          cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
+                          transition: 'all 0.2s ease'
+                        }}
                       >
                         {s.name}
                       </div>

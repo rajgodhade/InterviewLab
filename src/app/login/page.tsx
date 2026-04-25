@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -9,8 +9,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [platformName, setPlatformName] = useState('InterviewLab');
+  const [logoUrl, setLogoUrl] = useState('/logo.png');
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await supabase
+          .from('platform_settings')
+          .select('platform_name, logo_url')
+          .single();
+        if (data) {
+          if (data.platform_name) setPlatformName(data.platform_name);
+          if (data.logo_url) setLogoUrl(data.logo_url);
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    };
+    fetchSettings();
+  }, [supabase]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +79,7 @@ export default function LoginPage() {
             gap: '1rem',
             marginBottom: '1.5rem'
           }}>
-            <img src="/logo.png" alt="Logo" style={{ height: '80px', width: 'auto' }} />
+            <img src={logoUrl} alt="Logo" style={{ height: '80px', width: 'auto', objectFit: 'contain' }} />
             <div style={{ 
               fontSize: '2.5rem', 
               background: 'var(--accent-gradient)',
@@ -68,7 +88,7 @@ export default function LoginPage() {
               fontWeight: 900,
               letterSpacing: '-1px'
             }}>
-              InterviewLab
+              {platformName}
             </div>
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Admin Login</h2>

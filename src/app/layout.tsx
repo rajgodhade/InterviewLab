@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 import Navigation from "@/components/Navigation";
+import DeviceRestriction from "@/components/DeviceRestriction";
 
 export default function RootLayout({
   children,
@@ -25,12 +26,13 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round&display=swap" rel="stylesheet" />
       </head>
       <body className={inter.className}>
-        <Navigation />
-        <main>
-          <UIProvider>
+        <UIProvider>
+          <DeviceRestriction />
+          <Navigation />
+          <main>
             {children}
-          </UIProvider>
-        </main>
+          </main>
+        </UIProvider>
       </body>
     </html>
   );

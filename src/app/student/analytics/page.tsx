@@ -159,8 +159,8 @@ export default function StudentAnalytics() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         <StatCard title="Overall Proficiency" value={`${avgScore}%`} icon="stars" color="var(--accent-color)" />
         <StatCard title="Interviews Taken" value={growthData.length} icon="assignment_turned_in" color="var(--success)" />
-        <StatCard title="Best Technology" value={radarData.length > 0 ? radarData.sort((a, b) => b.A - a.A)[0].subject : 'N/A'} icon="emoji_events" color="var(--warning)" />
-        <StatCard title="Focus Area" value={radarData.length > 0 ? radarData.sort((a, b) => a.A - b.A)[0].subject : 'N/A'} icon="biotech" color="var(--danger)" />
+        <StatCard title="Best Technology" value={radarData.length > 0 ? [...radarData].sort((a, b) => b.A - a.A)[0].subject : 'N/A'} icon="emoji_events" color="var(--warning)" />
+        <StatCard title="Focus Area" value={radarData.length > 0 ? [...radarData].sort((a, b) => a.A - b.A)[0].subject : 'N/A'} icon="biotech" color="var(--danger)" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '2rem', marginBottom: '2.5rem' }}>
@@ -171,7 +171,7 @@ export default function StudentAnalytics() {
             {radarData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                  <PolarGrid stroke="rgba(128,128,128,0.15)" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} hide />
                   <Radar
@@ -203,7 +203,7 @@ export default function StudentAnalytics() {
                       <stop offset="95%" stopColor="var(--accent-color)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" vertical={false} />
                   <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} domain={[0, 100]} />
                   <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }} />
@@ -225,7 +225,7 @@ export default function StudentAnalytics() {
             <div key={type.name} style={{ textAlign: 'center' }}>
               <div style={{ position: 'relative', height: '120px', width: '120px', margin: '0 auto 1rem' }}>
                 <svg viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--bg-accent)" strokeWidth="3" />
                   <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={['var(--accent-color)', 'var(--success)', 'var(--warning)'][i % 3]} strokeWidth="3" strokeDasharray={`${type.value}, 100`} />
                 </svg>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '1.25rem', fontWeight: 800 }}>{type.value}%</div>

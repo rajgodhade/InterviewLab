@@ -226,10 +226,10 @@ export default function AdminAnalytics() {
         <div style={{ height: '300px', width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={timelineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
               <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }} />
+              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)' }} />
               <Legend />
               <Area type="monotone" dataKey="assigned" fill="var(--accent-color)" stroke="var(--accent-color)" fillOpacity={0.1} />
               <Bar dataKey="completed" fill="var(--success)" radius={[4, 4, 0, 0]} barSize={20} />
@@ -244,10 +244,10 @@ export default function AdminAnalytics() {
           <div style={{ height: '350px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={batchData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
                 <XAxis type="number" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
                 <YAxis dataKey="name" type="category" stroke="var(--text-primary)" fontSize={12} width={100} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }} />
+                <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
                 <Bar dataKey="avgScore" fill="var(--accent-color)" radius={[0, 8, 8, 0]} barSize={20}>
                   {batchData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -263,7 +263,7 @@ export default function AdminAnalytics() {
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>Growth Leaders (Most Improved)</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {growthLeaders.length > 0 ? growthLeaders.map((leader, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
                   <div>
                     <div style={{ fontWeight: 600 }}>{leader.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{leader.count} interviews taken</div>
@@ -308,7 +308,7 @@ export default function AdminAnalytics() {
               value={selectedTech} 
               onChange={(e) => setSelectedTech(e.target.value)}
               style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 color: 'var(--text-primary)',
                 padding: '0.5rem 1rem',
@@ -331,9 +331,10 @@ export default function AdminAnalytics() {
               flexDirection: 'column',
               gap: '0.75rem', 
               padding: '1.25rem', 
-              background: 'rgba(255,255,255,0.02)', 
+              background: 'var(--bg-secondary)', 
               borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.03)'
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-premium)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                 <div style={{ 
@@ -351,7 +352,7 @@ export default function AdminAnalytics() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '0.5rem' }}>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{q.total} Attempts</div>
-                <div style={{ height: '4px', width: '100px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ height: '4px', width: '100px', background: 'var(--bg-accent)', borderRadius: '2px', overflow: 'hidden' }}>
                   <div style={{ 
                     height: '100%', 
                     width: `${q.score}%`, 

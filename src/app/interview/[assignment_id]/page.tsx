@@ -275,7 +275,7 @@ export default function InterviewSession() {
         submitted_at: new Date().toISOString()
       }));
       setPendingSync(true);
-      showToast('Interview saved locally. Please reconnect to the internet to sync your answers.', 'warning');
+      showToast('Please reconnect to the internet to sync your answers.', 'warning');
       return;
     }
 

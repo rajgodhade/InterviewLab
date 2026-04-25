@@ -67,7 +67,7 @@ export default function LiveRoom() {
           </div>
           <p style={{ color: 'var(--text-secondary)' }}>Interview: <strong>{interview?.title}</strong> | Tracking {assignments.length} assigned seats</p>
         </div>
-        <button onClick={() => router.back()} style={{ background: 'var(--bg-accent)' }}>Back to Dashboard</button>
+        <button onClick={() => router.back()} style={{ background: 'var(--bg-accent)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>Back to Dashboard</button>
       </div>
 
       <div style={{ 
@@ -75,7 +75,7 @@ export default function LiveRoom() {
         padding: '4rem 2rem', 
         borderRadius: '24px', 
         border: '1px solid var(--border-color)',
-        boxShadow: 'inset 0 0 50px rgba(0,0,0,0.3)',
+        boxShadow: 'inset 0 0 50px rgba(0,0,0,0.1)',
         position: 'relative',
         minHeight: '600px',
         display: 'flex',
@@ -115,14 +115,14 @@ export default function LiveRoom() {
                 ? 'var(--success)' 
                 : isAssigned 
                   ? 'rgba(59, 130, 246, 0.15)' 
-                  : 'rgba(255, 255, 255, 0.02)';
+                  : 'var(--bg-primary)';
             const seatBorder = isCompleted 
               ? '2px solid #f59e0b' 
               : isLive 
                 ? '2px solid var(--success)' 
                 : isAssigned 
                   ? '2px solid rgba(59, 130, 246, 0.3)' 
-                  : '1px solid rgba(255, 255, 255, 0.04)';
+                  : '1px solid var(--border-color)';
             const seatShadow = isCompleted 
               ? '0 0 15px rgba(245, 158, 11, 0.4)' 
               : isLive 
@@ -179,7 +179,7 @@ export default function LiveRoom() {
                   {!isAssigned && (
                     <div style={{ 
                       position: 'absolute', top: '15%', width: '60%', height: '45%', 
-                      border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px' 
+                      border: '1px solid var(--border-color)', borderRadius: '6px' 
                     }}></div>
                   )}
 
@@ -238,7 +238,7 @@ export default function LiveRoom() {
           boxShadow: 'var(--shadow-premium)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{ width: '22px', height: '22px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', opacity: 0.4 }}></div>
+            <div style={{ width: '22px', height: '22px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-secondary)' }}></div>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>EMPTY SEAT</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>

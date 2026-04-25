@@ -197,7 +197,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
           <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-premium)', borderRadius: '24px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid var(--border-color)' }}>
+                <tr style={{ background: 'var(--bg-accent)', borderBottom: '1px solid var(--border-color)' }}>
                   <th style={{ padding: '1.25rem 2rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)' }}>Rank</th>
                   <th style={{ padding: '1.25rem 2rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)' }}>Student</th>
                   <th style={{ padding: '1.25rem 2rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)' }}>Sessions</th>
@@ -244,7 +244,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
                     <td style={{ padding: '1.25rem 2rem', fontWeight: 700 }}>{entry.total_score} / {entry.total_max}</td>
                     <td style={{ padding: '1.25rem 2rem', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '100px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ width: '100px', height: '6px', background: 'var(--bg-secondary)', borderRadius: '10px', overflow: 'hidden' }}>
                           <div style={{ width: `${entry.average_percentage}%`, height: '100%', background: entry.average_percentage > 80 ? 'var(--success)' : entry.average_percentage > 50 ? 'var(--accent-color)' : 'var(--danger)', borderRadius: '10px' }}></div>
                         </div>
                         <span style={{ 
@@ -267,7 +267,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
         .spinner {
           width: 50px;
           height: 50px;
-          border: 4px solid rgba(255,255,255,0.05);
+          border: 4px solid var(--border-color);
           border-radius: 50%;
           border-top-color: var(--accent-color);
           animation: spin 1s linear infinite;
@@ -282,7 +282,7 @@ export default function LeaderboardView({ isAdmin = false }: { isAdmin?: boolean
           min-height: 400px;
         }
         .ranking-row:hover {
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--bg-accent);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes float {

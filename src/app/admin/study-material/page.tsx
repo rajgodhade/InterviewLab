@@ -1,18 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useUI } from '@/components/UIProvider';
 
 export default function StudyMaterialManager() {
+  return (
+    <Suspense fallback={<div className="flex-center" style={{ padding: '4rem' }}><div className="spinner"></div></div>}>
+      <StudyMaterialContent />
+    </Suspense>
+  );
+}
+
+function StudyMaterialContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { showToast } = useUI();
   const [materials, setMaterials] = useState<any[]>([]);
   const [folders, setFolders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  
+  // Initialize from URL search params
+  const currentFolderId = searchParams.get('folder');
+  
+  const setCurrentFolderId = (id: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('folder', id);
+    } else {
+      params.delete('folder');
+    }
+    router.push(`/admin/study-material?${params.toString()}`);
+  };
   const [breadcrumbs, setBreadcrumbs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
@@ -28,6 +49,51 @@ export default function StudyMaterialManager() {
   });
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [activeMenuType, setActiveMenuType] = useState<'folder' | 'material' | null>(null);
+  const [viewingAccessId, setViewingAccessId] = useState<string | null>(null);
+  const [viewingAccessType, setViewingAccessType] = useState<'material' | 'folder' | null>(null);
+  const [accessRecords, setAccessRecords] = useState<any[]>([]);
+  const [loadingAccess, setLoadingAccess] = useState(false);
+
+  const openAccessModal = async (id: string, type: 'material' | 'folder') => {
+    setViewingAccessId(id);
+    setViewingAccessType(type);
+    setLoadingAccess(true);
+    try {
+      const table = type === 'material' ? 'study_material_assignments' : 'study_material_folder_assignments';
+      const field = type === 'material' ? 'material_id' : 'folder_id';
+      
+      const { data, error } = await supabase
+        .from(table)
+        .select(`
+          id,
+          student_id,
+          group_id,
+          students (name, email),
+          groups (name)
+        `)
+        .eq(field, id);
+      
+      if (error) throw error;
+      setAccessRecords(data || []);
+    } catch (err) {
+      console.error('Error fetching access records:', err);
+    } finally {
+      setLoadingAccess(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    if (!confirm('Are you sure you want to revoke this access?')) return;
+    try {
+      const table = viewingAccessType === 'material' ? 'study_material_assignments' : 'study_material_folder_assignments';
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) throw error;
+      showToast('Access revoked', 'success');
+      setAccessRecords(prev => prev.filter(r => r.id !== id));
+    } catch (err: any) {
+      showToast('Failed to revoke access: ' + err.message, 'error');
+    }
+  };
 
   const getThumbnail = (link: string, type: string) => {
     if (type === 'video') {
@@ -611,6 +677,12 @@ export default function StudyMaterialManager() {
                         animation: 'fadeIn 0.2s ease'
                       }}>
                         <button 
+                          onClick={(e) => { e.stopPropagation(); openAccessModal(folder.id, 'folder'); setActiveMenuId(null); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                          👁️ View Access
+                        </button>
+                        <button 
                           onClick={(e) => { e.stopPropagation(); router.push(`/admin/study-material/assign-folder/${folder.id}`); setActiveMenuId(null); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
@@ -702,6 +774,12 @@ export default function StudyMaterialManager() {
                           animation: 'fadeIn 0.2s ease'
                         }}>
                           <button 
+                            onClick={(e) => { e.stopPropagation(); openAccessModal(item.id, 'material'); setActiveMenuId(null); }}
+                            style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                          >
+                            👁️ View Access
+                          </button>
+                          <button 
                             onClick={(e) => { e.stopPropagation(); openMoveModal(item.id, 'material'); setActiveMenuId(null); }}
                             style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                           >
@@ -729,12 +807,21 @@ export default function StudyMaterialManager() {
                       {item.link.length > 40 ? item.link.substring(0, 40) + '...' : item.link}
                     </a>
                     
-                    <button 
-                      onClick={() => router.push(`/admin/study-material/assign/${item.id}`)}
-                      style={{ width: '100%', background: 'var(--bg-accent)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
-                    >
-                      Assign to Students / Batches
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button 
+                        onClick={() => openAccessModal(item.id, 'material')}
+                        style={{ flex: '0 0 45px', background: 'var(--bg-accent)', color: 'var(--text-primary)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="View assigned students"
+                      >
+                        👁️
+                      </button>
+                      <button 
+                        onClick={() => router.push(`/admin/study-material/assign/${item.id}`)}
+                        style={{ flex: 1, background: 'var(--bg-accent)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                      >
+                        Assign
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -783,6 +870,12 @@ export default function StudyMaterialManager() {
                         overflow: 'hidden',
                         animation: 'fadeIn 0.2s ease'
                       }}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openAccessModal(item.id, 'material'); setActiveMenuId(null); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                          👁️ View Access
+                        </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); router.push(`/admin/study-material/assign/${item.id}`); setActiveMenuId(null); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -897,6 +990,124 @@ export default function StudyMaterialManager() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      {/* Access Modal */}
+      {viewingAccessId && (
+        <div 
+          className="modal-overlay"
+          onClick={() => setViewingAccessId(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 11000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            animation: 'fadeIn 0.3s ease'
+          }}
+        >
+          <div 
+            className="card"
+            style={{ 
+              width: '100%', 
+              maxWidth: '600px', 
+              padding: '2rem', 
+              maxHeight: '80vh', 
+              display: 'flex', 
+              flexDirection: 'column',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-premium)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Current Access Control</h3>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {viewingAccessType === 'folder' ? 'Folder' : 'Material'} Access List
+                </p>
+              </div>
+              <button 
+                onClick={() => setViewingAccessId(null)}
+                style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '1.5rem', padding: '0.5rem' }}
+              >✕</button>
+            </div>
+
+            {loadingAccess ? (
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+                <p style={{ color: 'var(--text-secondary)' }}>Loading access records...</p>
+              </div>
+            ) : accessRecords.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--bg-accent)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                <span style={{ fontSize: '2.5rem' }}>👥</span>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', fontWeight: 500 }}>No access granted yet.</p>
+              </div>
+            ) : (
+              <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '0.5rem' }}>
+                {accessRecords.map(record => (
+                  <div key={record.id} style={{ 
+                    padding: '1rem', 
+                    borderRadius: '12px', 
+                    background: 'var(--bg-accent)', 
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: record.group_id ? 'var(--success)' : 'var(--accent-gradient)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                        {record.group_id ? 'B' : record.students?.name?.charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{record.group_id ? record.groups?.name : record.students?.name}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{record.group_id ? 'Batch Access' : record.students?.email}</div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleRevoke(record.id)}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--danger)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '8px' }}
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button 
+                onClick={() => {
+                  const path = viewingAccessType === 'folder' 
+                    ? `/admin/study-material/assign-folder/${viewingAccessId}` 
+                    : `/admin/study-material/assign/${viewingAccessId}`;
+                  router.push(path);
+                }}
+                style={{ width: '100%', background: 'var(--accent-gradient)' }}
+              >
+                + Assign New Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        .spinner {
+          width: 30px;
+          height: 30px;
+          border: 3px solid rgba(255,255,255,0.1);
+          border-top-color: var(--accent-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
