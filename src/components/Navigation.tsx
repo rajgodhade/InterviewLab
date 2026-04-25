@@ -316,9 +316,12 @@ export default function Navigation() {
     }}>
       <Link 
         href={isInsideInterview ? '#' : (isAdmin || isAdminRoute ? '/admin' : (isStudent || isStudentRoute ? '/student/dashboard' : '/'))} 
-        style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', textDecoration: 'none', cursor: isInsideInterview ? 'default' : 'pointer', zIndex: 1001 }}
+        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', cursor: isInsideInterview ? 'default' : 'pointer', zIndex: 1001 }}
       >
-        Interview<span style={{ color: 'var(--accent-color)' }}>Lab</span>
+        <img src="/logo.png" alt="InterviewLab" style={{ height: '36px', width: 'auto', borderRadius: '6px' }} />
+        <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+          Interview<span style={{ color: 'var(--accent-color)' }}>Lab</span>
+        </span>
       </Link>
 
       {/* Desktop Navigation */}

@@ -53,15 +53,23 @@ export default function LoginPage() {
       }}>
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ 
-            fontSize: '3rem', 
-            marginBottom: '1rem',
-            background: 'var(--accent-gradient)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 900,
-            letterSpacing: '-1px'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+            marginBottom: '1.5rem'
           }}>
-            InterviewLab
+            <img src="/logo.png" alt="Logo" style={{ height: '80px', width: 'auto' }} />
+            <div style={{ 
+              fontSize: '2.5rem', 
+              background: 'var(--accent-gradient)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 900,
+              letterSpacing: '-1px'
+            }}>
+              InterviewLab
+            </div>
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Admin Login</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
