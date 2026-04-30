@@ -210,12 +210,12 @@ export default function Navigation() {
       const isActive = (path: string) => pathname === path || (path !== '/' && pathname?.startsWith(path));
       navLinks = (
         <>
-          <Link href="/student/dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>Dashboard</Link>
-          <Link href="/student/interviews" style={{ fontSize: '0.9rem', color: isActive('/student/interviews') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/interviews') ? 700 : 500 }}>My Interviews</Link>
-          <Link href="/student/study-material" style={{ fontSize: '0.9rem', color: isActive('/student/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/study-material') ? 700 : 500 }}>Study Material</Link>
-          <Link href="/student/analytics" style={{ fontSize: '0.9rem', color: isActive('/student/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/analytics') ? 700 : 500 }}>Analytics</Link>
-          <Link href="/student/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/student/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
-          <Link href="/student/inbox" title="Notifications" style={{ 
+          <Link href="/student/dashboard" aria-label="Go to student dashboard" style={{ fontSize: '0.9rem', color: isActive('/student/dashboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/dashboard') ? 700 : 500 }}>Dashboard</Link>
+          <Link href="/student/interviews" aria-label="View my interviews" style={{ fontSize: '0.9rem', color: isActive('/student/interviews') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/interviews') ? 700 : 500 }}>My Interviews</Link>
+          <Link href="/student/study-material" aria-label="Access study materials" style={{ fontSize: '0.9rem', color: isActive('/student/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/study-material') ? 700 : 500 }}>Study Material</Link>
+          <Link href="/student/analytics" aria-label="View performance analytics" style={{ fontSize: '0.9rem', color: isActive('/student/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/analytics') ? 700 : 500 }}>Analytics</Link>
+          <Link href="/student/leaderboard" aria-label="View student leaderboard" style={{ fontSize: '0.9rem', color: isActive('/student/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/student/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
+          <Link href="/student/inbox" title="Notifications" aria-label={`View ${unreadCount} notifications`} style={{ 
             fontSize: '0.9rem', 
             color: isActive('/student/inbox') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
@@ -246,7 +246,7 @@ export default function Navigation() {
               </span>
             )}
           </Link>
-          <Link href="/student/messages" title="Messages" style={{ 
+          <Link href="/student/messages" title="Messages" aria-label={`View ${unreadMessages} messages`} style={{ 
             fontSize: '0.9rem', 
             color: isActive('/student/messages') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 
@@ -288,15 +288,15 @@ export default function Navigation() {
       };
       navLinks = (
         <>
-          <Link href="/admin" style={{ fontSize: '0.9rem', color: isActive('/admin') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin') ? 700 : 500 }}>Dashboard</Link>
-          <Link href="/admin/batches" style={{ fontSize: '0.9rem', color: isActive('/admin/batches') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/batches') ? 700 : 500 }}>Batches</Link>
-          <Link href="/admin/students" style={{ fontSize: '0.9rem', color: isActive('/admin/students') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/students') ? 700 : 500 }}>Students</Link>
-          <Link href="/admin/study-material" style={{ fontSize: '0.9rem', color: isActive('/admin/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/study-material') ? 700 : 500 }}>Study Material</Link>
-          <Link href="/admin/monitor" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
-          <Link href="/admin/analytics" style={{ fontSize: '0.9rem', color: isActive('/admin/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/analytics') ? 700 : 500 }}>Analytics</Link>
-          <Link href="/admin/leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
-          <Link href="/admin/settings" style={{ fontSize: '0.9rem', color: isActive('/admin/settings') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/settings') ? 700 : 500 }}>Settings</Link>
-          <Link href="/admin/messages" title="Messages" style={{ 
+          <Link href="/admin" aria-label="Go to admin dashboard" style={{ fontSize: '0.9rem', color: isActive('/admin') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin') ? 700 : 500 }}>Dashboard</Link>
+          <Link href="/admin/batches" aria-label="Manage batches" style={{ fontSize: '0.9rem', color: isActive('/admin/batches') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/batches') ? 700 : 500 }}>Batches</Link>
+          <Link href="/admin/students" aria-label="Manage students" style={{ fontSize: '0.9rem', color: isActive('/admin/students') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/students') ? 700 : 500 }}>Students</Link>
+          <Link href="/admin/study-material" aria-label="Manage study materials" style={{ fontSize: '0.9rem', color: isActive('/admin/study-material') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/study-material') ? 700 : 500 }}>Study Material</Link>
+          <Link href="/admin/monitor" aria-label="Monitor active interviews" style={{ fontSize: '0.9rem', color: isActive('/admin/monitor') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/monitor') ? 700 : 500 }}>Monitor</Link>
+          <Link href="/admin/analytics" aria-label="View platform analytics" style={{ fontSize: '0.9rem', color: isActive('/admin/analytics') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/analytics') ? 700 : 500 }}>Analytics</Link>
+          <Link href="/admin/leaderboard" aria-label="View platform leaderboard" style={{ fontSize: '0.9rem', color: isActive('/admin/leaderboard') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/leaderboard') ? 700 : 500 }}>Leaderboard</Link>
+          <Link href="/admin/settings" aria-label="Platform settings" style={{ fontSize: '0.9rem', color: isActive('/admin/settings') ? 'var(--accent-color)' : 'inherit', textDecoration: 'none', fontWeight: isActive('/admin/settings') ? 700 : 500 }}>Settings</Link>
+          <Link href="/admin/messages" title="Messages" aria-label={`View ${unreadMessages} student messages`} style={{ 
             fontSize: '0.9rem', 
             color: isActive('/admin/messages') ? 'var(--accent-color)' : 'inherit', 
             textDecoration: 'none', 

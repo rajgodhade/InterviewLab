@@ -5,6 +5,39 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUI } from '@/components/UIProvider';
 
+const TechFact = () => {
+  const facts = [
+    "JavaScript was created in just 10 days in May 1995 by Brendan Eich.",
+    "The first bug ever found was an actual moth trapped in a Relay at Harvard University.",
+    "The Python programming language was named after the comedy group Monty Python.",
+    "GitHub was founded in 2008 and was originally called Logical Awesome.",
+    "Next.js was first released in 2016 by Vercel (then known as Zeit).",
+    "TypeScript is a superset of JavaScript that adds static typing.",
+    "React was developed at Facebook to address issues with complex UIs.",
+    "Docker was first released in 2013 and revolutionized containerization.",
+    "The 'C' programming language was developed at Bell Labs between 1972 and 1973.",
+    "SQL was originally called SEQUEL (Structured English Query Language)."
+  ];
+  
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % facts.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <p key={index} style={{ 
+      margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', 
+      fontWeight: 500, animation: 'fadeIn 0.8s ease-out' 
+    }}>
+      {facts[index]}
+    </p>
+  );
+};
+
 export default function CreateInterview() {
   const router = useRouter();
   const { showToast } = useUI();
@@ -220,7 +253,9 @@ export default function CreateInterview() {
       }
 
       showToast('Interview created and assigned successfully!', 'success');
-      router.push('/admin');
+      
+      // Navigate to the interview details page
+      router.push(`/admin/questions/${interviewId}`);
     } catch (err: any) {
       console.error(err);
       showToast('Error: ' + err.message, 'error');
@@ -257,6 +292,13 @@ export default function CreateInterview() {
   return (
     <>
       <style jsx global>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         select option {
           background-color: var(--bg-secondary) !important;
           color: var(--text-primary) !important;
@@ -269,6 +311,51 @@ export default function CreateInterview() {
           background-size: 1em !important;
         }
       `}</style>
+      {loading && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, animation: 'fadeIn 0.3s ease'
+        }}>
+          <div className="card" style={{ 
+            width: '450px', padding: '3rem', textAlign: 'center', 
+            background: 'var(--glass-bg)', border: '1px solid var(--border-color)',
+            borderRadius: '32px', boxShadow: 'var(--shadow-premium)'
+          }}>
+            <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 2rem' }}>
+              <div style={{ 
+                width: '100%', height: '100%', borderRadius: '50%',
+                border: '4px solid rgba(139, 92, 246, 0.1)',
+                borderTop: '4px solid var(--accent-color)',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <div style={{ 
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                fontSize: '2rem'
+              }}>🤖</div>
+            </div>
+
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 800 }}>
+              Crafting Your Interview...
+            </h2>
+            
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', fontSize: '0.95rem', lineHeight: 1.6 }}>
+              Our AI is generating custom questions for <strong>{formData.technology}</strong>. This usually takes 15-30 seconds.
+            </p>
+
+            <div style={{ 
+              padding: '1.5rem', background: 'rgba(255,255,255,0.03)', 
+              borderRadius: '20px', border: '1px solid var(--border-color)',
+              minHeight: '100px', display: 'flex', flexDirection: 'column', justifyContent: 'center'
+            }}>
+              <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent-color)', letterSpacing: '1px', marginBottom: '0.5rem' }}>DID YOU KNOW?</span>
+              <TechFact />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container" style={{ maxWidth: '950px', padding: '2rem', position: 'relative' }}>
       <button 
         type="button"
